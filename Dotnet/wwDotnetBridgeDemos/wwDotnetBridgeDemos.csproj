@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<Version>1.0</Version>
+		<OutputPath>..\..\bin</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>		
+		
+		<AssemblyTitle>wwDotnetBridge Demos</AssemblyTitle>
+		<Title>wwDotnetBridge Demos</Title>				
+	
+
+		<Authors>Rick Strahl</Authors>
+		<Company>West Wind Technologies</Company>
+		<Copyright>Rick Strahl, West Wind Technologies,2024</Copyright>
+
+		
+		<RepositoryType>Github</RepositoryType>
+		<RepositoryUrl>https://github.com/RickStrahl/swfox_wwDotnetBridgerevisited</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' != 'net472'">
+		<DefineConstants>NETCORE;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(TargetFramework)' == 'net472'">
+		<DefineConstants>NETFULL</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+	  <PackageReference Include="Markdig" Version="0.37.0" />
+	  <PackageReference Include="WeCantSpell.Hunspell" Version="5.0.0" />
+	  <PackageReference Include="Westwind.Utilities" Version="5.0.8.2" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Reference Include="System.Windows.Forms" />
+	</ItemGroup>
+</Project>

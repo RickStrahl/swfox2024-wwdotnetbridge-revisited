@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "wwDotnetBridgeDemos": {
+      "commandName": "Executable",
+      "executablePath": "D:\\programs\\vfp9\\vfp9.exe",
+      "workingDirectory": "..\\.."
+    }
+  }
+}
