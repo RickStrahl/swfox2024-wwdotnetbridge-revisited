@@ -17,7 +17,7 @@ dontStripH1Header: false
 *by **Rick Strahl***  
 *prepared for **Southwest Fox**, 2024*  
 *[Session Example Code](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited) on GitHub*  
-*[Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)*   
+*[Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)*   
 *[wwDotnetBridge Repo](https://github.com/RickStrahl/wwDotnetBridge) on GitHub*  
 </div>
 
@@ -527,4 +527,4 @@ Ok enough theory - let's jump in and put all of this into practice with some use
     * White Paper
     * Slides
 * [Get wwDotnetBridge from GitHub](https://github.com/RickStrahl/wwDotnetBridge)
-* [Slides for SWFox2024 Session](../Strahl-swFox2024-wwDotnetBridge-Revisited.pptx) 
+* [Slides for SWFox 2024 Session](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx) 
