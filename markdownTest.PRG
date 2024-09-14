@@ -6,7 +6,7 @@ DO MarkdownParser
 CLEAR
 
 *** Straight Code
-#IF .T.
+#IF .F.
 
 
 
@@ -36,7 +36,7 @@ Great it works!
 ENDTEXT
 
 ***  Actual Markdown Conversion here - Invoke a Static Method
-lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",
+lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",;
                                      lcMarkdown,null)
 
 *** UDF Function
@@ -45,18 +45,15 @@ lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",
 ? lcHtml
 ShowHtml(lcHtml)  && from wwUtils show in browser unformatted
 
-
-
-
 RETURN
 #ENDIF
 
 *** Using Markdown Parser Wrapper Class
-#IF .F.
+#IF .T.
 DO MarkdownParser
 DO wwutils && For Html Preview
 
-loParser = CREATEOBJECT("MarkdownParser")
+loParser = CREATEOBJECT("MarkdownParserExtended")
 
 TEXT TO lcMarkdown NOSHOW
 This is some sample Markdown text. This text is **bold** and *italic*.
@@ -71,8 +68,28 @@ Great it works!
 > This is a block quote with a header
 ENDTEXT
 
-
 lcHtml = loParser.Parse(lcMarkdown)
+
+TEXT TO lcHtml TEXTMERGE NOSHOW
+<html>
+<head>
+	<link rel="stylesheet" href="https://weblog.west-wind.com/scripts/fontawesome/css/all.min.css" type="text/css">
+	<link href="https://weblog.west-wind.com/App_Themes/Standard/Standard.css?v=1.26" type="text/css" rel="stylesheet">
+	<style>
+	   .container { padding: 1em 2em; }
+	</style>
+</head>
+<body>
+<div class="container">
+<h1>Markdown Template Expansion</h1>
+<<lcHtml>>
+</container>
+</body>
+</html>
+ENDTEXT
+
+
+
 ShowHtml( lcHtml )
 RETURN
 #ENDIF

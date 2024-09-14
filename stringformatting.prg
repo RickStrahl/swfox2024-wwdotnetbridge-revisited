@@ -52,8 +52,6 @@ lcFormat = "ddd, dd MMM yyyy HH:mm:ss zzz"
 *** Number formats
 ? "Unformatted number: " + FormatValue(1233.22)
 
-
-
 lcFormat = "00"
 ? lcFormat + ": " + FormatValue(2,"00")
 * 02

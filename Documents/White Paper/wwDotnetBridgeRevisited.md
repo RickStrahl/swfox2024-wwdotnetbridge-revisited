@@ -833,9 +833,22 @@ ENDFUNC
 *   EscapeCSharpString
 ```
 
-Notice again the requirement to call each of the overloads for each parameter variation separately which is tedious to look at in the code but actually efficient.
+The first thing you notice here's is that we are calling a **static method** on the `System.String` class. Static methods are non-instance method, meaning you don't first create an instance. Instead the methods are static and bound to a specific type. In FoxPro this is similar to a UDF() function or plain function that is globally available. Static methods and properties are referenced by the type name - ie. `System.String` instead of the instance, followed by the method or member name. 
 
-This could be remedied if we wanted to create a .NET wrapper method with variable parameters in which case we could pass in an array of values. While that would be easier to code it would actually be less efficient due to the extra array structure that would have to be created. So while this code is ugly, it's the most efficient way to call this method with up to 10 expansion parameters.
+Here we call the static Format method with the format string and a single value as a parameter:
+
+```foxpro
+loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1)
+```
+
+In this method you'll noticve the requirement to call each of the overloads for each parameter variation, which looks tedious but actually is the most efficient way to call this method. There are other overloads of `InvokeStaticMethod()` that can be passed an array of parameters, and while that would be cleaner to look at and allow for an unlimited number of parameters, it's less efficient as the array has to be created and parsed on both ends. Passing values directly is significantly faster and for a low level utility method like this it's definitely beneficial to optimize performance as much as is possible. 
+
+#### Summary
+In this example you learned:
+
+* Calling native .NET Methods
+* Calling a non-instance Static method
+* How .NET Format Strings and ToString() work
 
 ### Add Markdown Parsing to your Applications
 
