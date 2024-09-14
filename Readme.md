@@ -4,5 +4,5 @@ This repository has all the sample code for the 2024 Southwest Fox **wwDotnetBri
 
 ### Links
 
-* [wwDotnetBridge Revisited White Paper](Documents/White%20Paper/RevisitingWwdotnetbridgeAndNetInteropFromFoxproInTheModernAgeOfNet.md)
+* [wwDotnetBridge Revisited White Paper](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/blob/master/Documents/White%20Paper/wwDotnetBridgeRevisited.md)
 * [Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)

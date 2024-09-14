@@ -1,15 +1,3 @@
----
-title: Revisiting wwDotnetBridge and .NET Interop from FoxPro in the Modern Age of .NET
-abstract: 
-keywords: 
-categories: 
-weblogName: West Wind Web Log
-postId: 
-postDate: 2024-08-24T14:04:47.0286533-07:00
-postStatus: publish
-dontInferFeaturedImage: false
-dontStripH1Header: false
----
 # Revisiting wwDotnetBridge and .NET Interop from FoxPro in the Modern Age of .NET
 
 <div style="margin: 1em 0 3em 0; font-size: 0.8em;">
