@@ -16,6 +16,8 @@ packages
 *.opensdf
 ~*.*
 
+!bin
+
 # mstest test results
 TestResults
 

@@ -449,10 +449,417 @@ Here's LinqPad checking out the Spell Checking example code:
 
 LinqPad is an awesome tool if you're using .NET in general - it allows you to create small snippets for testing as I've shown, but you can also use it as a tool to create small utilities like converters, translators and general purpose tools that you can readily save and then later load. For example, I have several converters that convert TypeScript classes to C# and vice versa, de-dupe lists of email addresses and many other things that are basically stored as LinqPad scripts that I can pull up and tweak or paste different source text into.
 
-
-
 ## Usage Examples
 Ok enough theory - let's jump in and put all of this into practice with some useful examples that you can use in your own applications.
+
+1. wwDotnetBridge 101 – Load, Create, Invoke, Get/Set
+2. Create a powerful String Formatter
+3. Add Markdown Parsing to your Applications
+4. Use a Two-Factor Authenticator Library
+5. Add Spellchecking to your applications
+6. Humanize numbers, dates, measurements
+7. File Watcher and Live Reload (Event Handling)
+8. Async: Use OpenAI for common AI Operations
+9. Async: Print Html to Pdf
+10. Create a .NET Component and call it from FoxPro
+
+### wwDotnetBridge 101 – Load, Create, Invoke, Get/Set
+Lets start with a basic usage example that demonstrates how wwDotnetBridge works.
+
+For this 101 level example I'm going to use a custom class in custom compiled project I created for examples for this session. We'll talk about how to create this class later, but for now just know that this project creates an external .NET assembly (.dll) from which we'll load a .NET class, and call some of its members. 
+
+Specifically we'll look at how to:
+
+* Load wwDotnetBridge
+* Load an Assembly
+* Create a .NET Object instance
+* Make native COM calls on the instance
+* Invoke or access problem members on an instance
+* Use Helper Classes to work with problematic .NET Types
+
+#### Simple Invocation
+The easiest way to look at this is to look at commented example.
+
+```foxpro
+do wwDotNetBridge                 && Load library
+LOCAL loBridge as wwDotNetBridge  && for Intellisense only
+loBridge = GetwwDotnetBridge()    && Create Cached Instance of wwDotnetBridge
+
+*** Load an .NET Assembly (dll)
+loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
+
+*** Create a class Instance - `Namespace.Classname`
+loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
+
+*** Access simple Properties - direct access
+? "*** Simple Properties:" 
+? loPerson.Name
+? loPerson.Company
+? loPerson.Entered
+?
+
+*** Call a Method - direct access
+? "*** Method call: Formatted Person Record (ToString):"
+? loPerson.ToString()  && Formatted Person with Address
+?
+
+*** Add a new address - direct access
+loAddress =  loPerson.AddAddress("1 Main","Fairville","CA","12345")
+
+*** Special Properties - returns a ComArray instance
+loAddresses = loBridge.GetProperty(loPerson, "Addresses")  
+
+? loBridge.ToJson(loAddresses, .T.)  && Commercial only
+? TRANSFORM(loAddresses.Count) + " Addresses"     && Number of items in array
+
+? "*** First Address"
+loAddress = loAddresses.Item(0)
+? "Street: " + loAddress.Street
+? "Full Address (ToString): " + CHR(13) + CHR(10) + loAddress.ToString()
+? 
+
+? "*** All Addresses"
+FOR lnX = 0 TO loAddresses.Count-1
+	loAddress = loAddresses.Item(lnX)
+	? loAddress.ToString()
+	?
+ENDFOR
+```
+
+The first steps are pretty straight forward: You create an instance of the wwDotnetBridge object, which you then use to create an instance of a .NET class - or you can also call static methods directly (using `.InvokeStaticMethod()` more on that in the next sample).
+
+
+Once you have the class you can call its methods and access its properties. For any properties and method signatures that are COM compliant, you can just directly access them the same way as you would for FoxPro members.
+
+#### Indirect Execution
+For problem types or some complex types likes arrays and collections, you have to use wwDotnetBridge's indirect invocation methods to access members. The three most common methods are:
+
+* InvokeMethod()
+* GetProperty()
+* SetProperty()
+
+In this example, the `loPerson` instance includes an `Addresses` property which contains an array of Address object. While you can retrieve the `Addresses` object directly, you can't do anything useful with the array in FoxPro. 
+
+So rather than returning the array `.GetProperty()` returns you a ComArray instance instead which lets you access and manipulate the collection:
+
+```foxpro
+*** Returns a ComArray instance
+loAddresses = loBridge.GetProperty(loPerson,"Addresses")
+
+? loAddresses.Count   && 2
+loAddress1 = loAddresses.Item(0)
+
+FOR lnX = 0 to loAddresses.Count -1 
+    loAddress = loAddresses.Item(lnX)
+    * ? loAddress.Street
+    ? loAddress.ToString()
+ENDFOR
+
+loNewAddress = loBridge.CreateInstance("wwDotnetBridge.Address")
+loNewAddress.Street = "122 Newfound Landing"
+loAddressses.Add(loNewAddress)
+
+loAddresses.Count   && 3
+```
+
+#### Using ComArray for .NET Arrays, Lists and Collections
+Because arrays and collections are ultra-common in .NET here's how you can add a new item to the collection using the same ComArray structure:
+
+```foxpro
+? "*** Add another item to the array"
+* loNewAddress = loBridge.CreateInstance("wwDotnetBridgeDemos.Address")
+loNewAddress = loAddresses.CreateItem()
+loNewAddress.Street = "122 Newfound Landing"
+loNewAddress.City = "NewFoundLanding"
+loAddresses.Add(loNewAddress)
+
+? TRANSFORM(loAddresses.Count) + " Addresses"  && 3
+FOR lnX = 0 to loAddresses.Count -1 
+    loAddress = loAddresses.Item(lnX)
+    ? loAddress.ToString()
+    ? 
+ENDFOR
+```
+
+#### Summary
+You've just seen how to:
+
+* Load a .NET Assembly
+* Create a .NET Class from within it
+* Call methods and set properties
+* Access a complex property and use a helper object
+* Work .NET Collections from FoxPro
+
+### Create a powerful String Formatter
+The next example is a little more practical in that it provides most of .NET's string formatting features right into Visual FoxPro. .NET uses string formatters that allow powerful formatting of things like dates and numbers along with C style string format templates.
+
+This sample demonstrates:
+
+* Calling into native .NET functions in the .NET Base Library
+* Invoking a static method
+
+In this example we'll access two native .NET features:
+
+* .NET's `.ToString()` object method which supports formatting
+* The `string.FormatString()` static method which allows for C Style Template strings
+
+#### Formatting Dates and Numbers or any Formattable .NET Type
+Format string has the ability to format any type that supports formatting via the `ToString()` method. `ToString()` is one of .NET's base object methods meaning **every object** (including strings, numbers, bools etc.) in .NET have a `.ToString()`. Any class can override `ToString()` and optionally provide the ability to format the output via a format string.
+
+The format specifier is similar in behavior to `Transform()` in FoxPro, except that .NET formatters tend to be much more flexible with many more options.
+
+The most common formatters are Date and Number formatters, but many other types have formatters.
+
+Let's look at some Date formatting first:
+
+* [.NET Date Format Strings Docs](https://learn.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)
+
+```foxpro
+do _startup.prg
+
+do wwDotNetBridge
+LOCAL loBridge as wwDotNetBridge
+loBridge = GetwwDotnetBridge()
+
+*** No Format String - Default ToString() behavior
+? "Plain FormatValue on Date: "  + FormatValue(DATETIME())
+* 6/6/2016 7:49:26 PM
+
+lcFormat = "MMM d, yyyy"
+? lcFormat + ": " +  FormatValue(DATETIME(),lcFormat)
+* Jun 10, 2016
+
+lcFormat = "MMMM d, yyyy"
+? lcFormat + ": " + FormatValue(DATETIME(),lcFormat)
+* August 1, 2016
+
+lcFormat = "HH:mm:ss"
+? lcFormat + ": " + FormatValue(DATETIME(),lcFormat)
+* 20:15:10
+
+cFormat = "h:m:s tt"
+? lcFormat + ": " +  FormatValue(DATETIME(),lcFormat)
+* 8:5:10 PM
+
+lcFormat = "MMM d @ HH:mm"
+? lcFormat + ": " +  FormatValue(DATETIME(),lcFormat)
+* Aug 1 @ 20:44
+
+lcFormat = "r"  && Mime Date Time
+? lcFormat + ": " +  FormatValue(DATETIME(),lcFormat)
+* Mon, 06 Jun 2016 22:41:33 GMT
+
+lcFormat = "u"  
+? lcFormat + ": " +  FormatValue(DATETIME(),lcFormat)
+* 2016-06-06 22:41:44Z
+
+lcFormat = "ddd, dd MMM yyyy HH:mm:ss zzz"
+? "MimeDateTime: " +  STUFF(FormatValue(DATETIME(),lcFormat),30,1,"")
+* 2016-06-06 22:41:44Z
+```
+
+There are **a lot** of different time formats available including fully spelled out versions. By default all date formats are in the currently active user locale (ie. `en_US` or `de_DE`)  and the value will adjust based on which language you are running your application in. It's also possible to pass a specific culture to format for some other language and formatting, but that's not supported for the helpers discussed here.
+
+Number formatting is very similar:
+
+* [.NET Number Format Strings Docs](https://learn.microsoft.com/en-us/dotnet/standard/base-types/standard-numeric-format-strings)
+
+```foxpro
+? "*** Numberformats"
+
+*** Number formats
+
+lcFormat = "00"
+? lcFormat + ": " + FormatValue(2,"00")
+* 02
+
+? lcFormat + ": " + FormatValue(12,"00")
+* 12
+
+lcFormat = "c"
+? lcFormat + ": " +  FormatValue(1233.22,lcFormat)
+* $1,233.22
+
+lcFormat = "n2"
+? lcFormat + ": " +  FormatValue(1233.2255,lcFormat)
+* $1,233.23
+
+lcFormat = "n0"
+? lcFormat + ": " +  FormatValue(1233.2255,lcFormat)
+* $1,233
+?
+```
+
+To implement the above `FormatValue()` function, I use a simple FoxPro wrapper function that looks like this:
+
+```foxpro
+************************************************************************
+*  FormatValue
+****************************************
+***  Function: Formats a value using .NET ToString() formatting
+***            for whatever the text ends up with
+***      Pass:  Pass in any .NET value and call it's ToString()
+***             method of the underlying type. This 
+***    Return: Formatted string
+************************************************************************
+FUNCTION FormatValue(lvValue,lcFormatString)
+LOCAL loBridge 
+
+IF ISNULL(lvValue)
+   RETURN "null"
+ENDIF   
+
+loBridge = GetwwDotnetBridge()
+
+IF EMPTY(lcFormatString)	
+	RETURN loBridge.InvokeMethod(lvValue,"ToString")
+ENDIF  
+
+RETURN loBridge.InvokeMethod(lvValue,"ToString",lcFormatString)
+ENDFUNC
+*   FormatValue
+```
+
+This function basically works of the value that we are passing into .NET and relies on the fact that .NET treats any value or object as an object. So a Date or Number, Boolean all are objects and we can call `ToString(formatString)` on those values. So it's literally a single method call. 
+  
+If no parameter is passed we just call 'ToString()` without parameters, otherwise we call it with the `lcFormatString` parameter. Note that each overloaded .NET method requires a separate FoxPro call - even if the .NET method has default values for the method. This is because .NET internally looks at full method signatures and default parameter values are not part of the meta data that is used to match the right signature to call.
+
+We'll see this more vividly in the `FormatString()` function we'll discuss next.
+
+#### String Formatting with C Style String Templates
+Most C style languages has a `printf()` style string formatting functionality where you can 'inject' embeddable values into the string. This is a **compile time feature** where the compiler can figure out the reference to a variable at compile time and then create a string that embeds the relevant `ToString()` value into string. 
+
+Here's what this looks like when called from FoxPro:
+
+```foxpro
+? "*** String Formatting"
+? FormatString("Hey {0}, the date and time is: {1:MMM dd, yyyy - h:mm tt}","Rick",DATETIME())
+?
+
+? "*** Brackets need to be double escaped"
+? FormatString("This should escape {{braces}} and format the date: {0:MMM dd, yyyy}",DATE())
+```
+
+You can call `FormatString()` with a string 'template' that contains `{0-n}` expressions inside of it and you then pass parameters to the functions to fill in the `{n}` holes with the parameter values. The numbering is 0 based so you start with `{0}` for the first parameter.
+
+Additionally you can also apply format strings as described in `FormatValue()` so you can use `{0:MMM dd, yyy}` for a  Date expansion for example.
+
+Note that `FormatString()` uses `ToString()` to format the value, so this works with any kind of object although many actual objects don't implement it and instead return just the object name. However, if a class implements `ToString()` and has custom output - as I did in the `wwDotnetBridge101` example and the `Person.ToString()` method which outputs the display name and address you can display that as part of a format string too:
+
+```foxpro
+*** Load loPerson .NET Object
+? loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
+
+*** Load up a person object and set some values on person and first address
+loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
+loPerson.Name = "Rick Strahl"
+loAddresses = loBridge.GetProperty(loPerson,"Addresses")
+loAddress = loAddresses.Item(0)
+loAddress.City = "SomeTown Ugly Town USA"
+
+? FormatString("Person Object:\r\n{0} and the time is: {1:t}", loPerson, DATETIME())
+```
+
+`FormatString()` is very powerful and quite useful to quickly create string structures.
+
+> FormatString() also supports several C# string escape characters like `\r` `\n` and `\t` although that's not natively supported (.NET treats a foxPro string as is and escapes any special characters - I escape the strings in FoxPro before passing to .NET)
+
+Here's what the FoxPro `FormatString()` function looks like:
+
+```foxpro
+************************************************************************
+*  FormatString
+****************************************
+***  Function: Uses a string template to embed formatted values
+***            into a string.
+***    Assume:
+***      Pass: lcFormat    -  Format string use {0} - {10} for parameters
+***            lv1..lv10   -  Up to 10 parameters
+***    Return:
+************************************************************************
+FUNCTION FormatString(lcFormat, lv1,lv2,lv3,lv4,lv5,lv6,lv7,lv8,lv9,lv10)
+LOCAL lnParms, loBridge
+lnParms = PCOUNT()
+loBridge = GetwwDotnetBridge()
+
+lcFormat = EscapeCSharpString(lcFormat)
+
+DO CASE 
+	CASE lnParms = 2
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1)
+	CASE lnParms = 3
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2)
+	CASE lnParms = 4
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3)
+	CASE lnParms = 5
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4)
+	CASE lnParms = 6
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5)
+	CASE lnParms = 7
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5,lv6)
+	CASE lnParms = 8
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5,lv6,lv7)
+	CASE lnParms = 9
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5,lv6,lv7,lv8)
+	CASE lnParms = 10
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5,lv6,lv7,lv8,lv9)
+	CASE lnParms = 11
+		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5,lv6,lv7,lv8,lv10)
+	OTHERWISE
+	    THROW "Too many parameters for FormatString"
+ENDCASE
+
+
+ENDFUNC
+*   StringFormat
+
+************************************************************************
+*  EscapeCSharpString
+****************************************
+***  Function:
+***    Assume:
+***      Pass:
+***    Return:
+************************************************************************
+FUNCTION EscapeCSharpString(lcValue)
+
+lcValue = STRTRAN(lcValue, "\r", CHR(13))
+lcValue = STRTRAN(lcValue, "\n", CHR(10))
+lcValue = STRTRAN(lcValue, "\t", CHR(9))
+lcValue = STRTRAN(lcValue, "\0", CHR(0))
+
+RETURN lcValue
+ENDFUNC
+*   EscapeCSharpString
+```
+
+Notice again the requirement to call each of the overloads for each parameter variation separately which is tedious to look at in the code but actually efficient.
+
+This could be remedied if we wanted to create a .NET wrapper method with variable parameters in which case we could pass in an array of values. While that would be easier to code it would actually be less efficient due to the extra array structure that would have to be created. So while this code is ugly, it's the most efficient way to call this method with up to 10 expansion parameters.
+
+### Add Markdown Parsing to your Applications
+
+
+### Use a Two-Factor Authenticator Library
+
+
+### Add Spellchecking to your applications
+
+
+### Humanize numbers, dates, measurements
+
+
+### File Watcher and Live Reload (Event Handling)
+
+
+### Async: Use OpenAI for common AI Operations
+
+
+### Async: Print Html to Pdf 
+
+
+### Create a .NET Component and call it from FoxPro
+
 
 
 ## Best Practices

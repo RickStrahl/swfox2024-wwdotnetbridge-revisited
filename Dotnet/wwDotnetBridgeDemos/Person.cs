@@ -10,7 +10,7 @@ namespace wwDotnetBridgeDemos
 
         public string Company {get; set; } = "West Wind";
 
-        public string DisplayName =>  (Name ?? string.Empty) +  
+        public string DisplayName =>   (Name ?? string.Empty) +  
             (!string.IsNullOrEmpty(Company) ?  $" ({Company})" : string.Empty);
 
         public DateTime Entered {get; set; } = DateTime.Now;

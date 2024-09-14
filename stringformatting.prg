@@ -11,7 +11,7 @@ loBridge = GetwwDotnetBridge()
 ? "*** Date formatting"
 ?
 
-? "Plain FormatValue on Date: "  + FormatValue(DATETIME(),"")
+? "Plain FormatValue on Date: "  + FormatValue(DATETIME())
 * 6/6/2016 7:49:26 PM
 
 lcFormat = "MMM d, yyyy"
@@ -45,11 +45,14 @@ lcFormat = "u"
 lcFormat = "ddd, dd MMM yyyy HH:mm:ss zzz"
 ? "MimeDateTime: " +  STUFF(FormatValue(DATETIME(),lcFormat),30,1,"")
 * 2016-06-06 22:41:44Z
+?
 
  
 ? "*** Numberformats"
-
 *** Number formats
+? "Unformatted number: " + FormatValue(1233.22)
+
+
 
 lcFormat = "00"
 ? lcFormat + ": " + FormatValue(2,"00")
