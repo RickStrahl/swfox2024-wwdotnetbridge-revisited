@@ -17,7 +17,8 @@ dontStripH1Header: false
 *by **Rick Strahl***  
 *prepared for **Southwest Fox**, 2024*  
 *[Session Example Code](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited) on GitHub*  
-*[wwDotnetBridge Repo](https://github.com/RickStrahl/wwDotnetBridge) on GitHub*
+*[Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)*   
+*[wwDotnetBridge Repo](https://github.com/RickStrahl/wwDotnetBridge) on GitHub*  
 </div>
 
 .NET has proliferated as the dominant Windows development environment, both for application development using a variety of different Windows-specific platforms and the high-level interface chosen by Microsoft  to expose Windows system functionality. .NET based APIs have mostly replaced COM as the high level Windows system interface that exposes Interop features besides native C++.
@@ -526,3 +527,4 @@ Ok enough theory - let's jump in and put all of this into practice with some use
     * White Paper
     * Slides
 * [Get wwDotnetBridge from GitHub](https://github.com/RickStrahl/wwDotnetBridge)
+* [Slides for SWFox2024 Session](../Strahl-swFox2024-wwDotnetBridge-Revisited.pptx) 
