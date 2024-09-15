@@ -1,4 +1,5 @@
 DO wwdotnetBridge
+DO wwutils
 SET PROCEDURE TO MarkDownParser ADDITIVE
 
 * See FoxUnit: Tests\MarkdownParserTests.prg

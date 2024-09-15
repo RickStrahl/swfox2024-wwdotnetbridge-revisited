@@ -6,7 +6,7 @@ DO MarkdownParser
 CLEAR
 
 *** Straight Code
-#IF .F.
+#IF .T.
 
 
 
@@ -23,7 +23,9 @@ TEXT TO lcMarkdown NOSHOW
 
 This is some sample Markdown text. This text is **bold** and *italic*.
 
-![](https://markdownmonster.west-wind.com/Images/Icon_32.png) 
+* [Source Code for this sample on GitHub](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/blob/master/markdownTest.PRG)
+
+![](https://markdownmonster.west-wind.com/docs/images/logo.png) 
 
 * List Item 1
 * List Item 2
@@ -64,8 +66,24 @@ This is some sample Markdown text. This text is **bold** and *italic*.
 
 Great it works!
 
-> ### @icon-info-circle Examples are great
+> #### @icon-info-circle Examples are great
 > This is a block quote with a header
+
+
+### Link Embedding is easy
+
+* [Sample Repositor](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited)
+* [Source Code for this sample on GitHub](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/blob/master/markdownTest.PRG)
+
+### Markdown Monster wants to eat your Markdown!
+
+* [Download Markdown Monster](https://markdownmonster.west-wind.com)
+
+![](https://markdownmonster.west-wind.com/Images/MarkdownMonsterLogo.jpg)
+
+### The Markdown Editor for Windows
+
+
 ENDTEXT
 
 lcHtml = loParser.Parse(lcMarkdown)
@@ -76,7 +94,7 @@ TEXT TO lcHtml TEXTMERGE NOSHOW
 	<link rel="stylesheet" href="https://weblog.west-wind.com/scripts/fontawesome/css/all.min.css" type="text/css">
 	<link href="https://weblog.west-wind.com/App_Themes/Standard/Standard.css?v=1.26" type="text/css" rel="stylesheet">
 	<style>
-	   .container { padding: 1em 2em; }
+	   .container { padding: 0.3em 2em; }
 	</style>
 </head>
 <body>

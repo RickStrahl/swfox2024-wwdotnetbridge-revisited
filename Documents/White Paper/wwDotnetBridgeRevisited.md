@@ -851,6 +851,282 @@ In this example you learned:
 * How .NET Format Strings and ToString() work
 
 ### Add Markdown Parsing to your Applications
+The next example demonstrates using a Markdown to HTML parser. Markdown is a very useful text format that uses plain text mixed with a few readable text markup expressions that allow create rich HTML document text via plain text input. It can be used in lieu of WYIWYG editors and because it can be rendered very quickly allows you to actually preview content as you type in real time. So rather than typing in a simulated text editor to tries to simulate the final markup, you write plain text with markup simple expressions and look at a preview (or not) to see what the final output would look like.
+
+In short it's a great tool for writing text that needs to be a little more fancy than just a wall of plain text. It's super easy to add bold, italic, lists, notes, code snippets, embed link and images using Markdown. 
+
+#### Some Examples of Markdown Usage
+I'm a huge fan of Markdown and I've integrated it into several of my applications:
+
+* Markdown Monster (a Markdown Editor)
+
+![Markdown Monster](MarkdownMonster.png){style="max-width: 1000px"}
+
+* Help Builder (HTML documentation and HTML preview)
+* West Wind Message Board (used for message text)
+* My Weblog - posts are written in Markdown and rendered to HTML
+* Articles like this one - written in Markdown
+
+
+
+#### Using Markdig for Markdown To HTML Conversion
+Let's start with the simplest thing you can do which is to use a 3rd party library and it's most basic, default function to convert Markdown to Html which is sufficient for most use cases.
+
+> I'm using an older version of Markdig (`v0.15.2`) because it has no extra dependencies. Later versions work fine (although the `ToHtml()` method signature changes) but it requires that you add several additional dependencies of .NET assemblies. The old version has all the features you are likely to need so for FoxPro use this is the preferred version.
+
+Notice that there are two parameters to the `Markdig.Markdown.ToHtml()` method: The markdown and a markdown parser pipeline that is optional. Remember from FoxPro **we always have to pass optional parameters** so we can pass the default value of `null`.
+
+```foxpro
+DO wwutils && For Html Preview
+
+do wwDotNetBridge
+LOCAL loBridge as wwDotNetBridge
+loBridge = GetwwDotnetBridge()
+
+loBridge.LoadAssembly("markdig.dll")
+
+TEXT TO lcMarkdown NOSHOW
+# Raw Markdown Sample using the Markdig Parser
+
+This is some sample Markdown text. This text is **bold** and *italic*.
+
+* [Source Code for this sample on GitHub](https://github.com/../markdownTest.PRG)
+
+![](https://markdownmonster.west-wind.com/docs/images/logo.png) 
+
+* List Item 1
+* List Item 2
+* List Item 3
+
+Great it works!
+
+> #### Examples are great
+> This is a block quote with a header
+ENDTEXT
+
+
+***  Actual Markdown Conversion here - Invoke a Static Method
+lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",;
+                                     lcMarkdown,null)
+
+? lcHtml
+ShowHtml(lcHtml)  && from wwUtils show in browser unformatted
+```
+
+And that works:
+
+![Markdown Test From Fox Pro](MarkdownTestFromFoxPro.png)
+
+We have to load the `markdig.dll` library, but the key feature of this code is the static method call to:
+
+```foxpro
+lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",;
+                                     lcMarkdown,null)
+```
+
+This method takes the markdown to parse, plus a parameter of a ParserFactory which we have to pass even though the parameter is null. As I often do I first create the code I want to call in LinqPad to test, then call it from FoxPro. Here's the LinqPad test:
+
+![Markdig In Linq Pad](MarkdigInLinqPad.png)
+
+And that works.
+
+#### Adding a more sophisticated Parser Wrapper
+The call to `ToHtml()` in its default form with the parser pipeline set to null gets you a default parser, but you might want to take advantage of additional features of add-ons that the parser supports. For example, you can add support for Github Flavored Markdown (Github specific features), Grid Tables, Pipe Tables, automatic link expansion and much more.
+
+To do this it's a good idea to create a wrapper class and build and cache the pipeline so it can be reused easily.
+
+Here's a Markdown Parser class:
+
+```foxpro
+*************************************************************
+DEFINE CLASS MarkDownParser AS Custom
+*************************************************************
+oPipeline = null
+oBridge = null
+
+lEncodeScriptBlocks = .T.
+lSanitizeHtml = .T.
+lNoHtmlAllowed = .F.
+
+************************************************************************
+FUNCTION Init()
+****************************************
+LOCAL loBridge as wwDotNetBridge
+
+loBridge = GetwwDotnetBridge()
+
+this.oBridge = loBridge
+IF ISNULL(THIS.oBridge)
+   RETURN .F.
+ENDIF
+
+IF !loBridge.LoadAssembly("markdig.dll")
+   RETURN .F.
+ENDIF   
+
+ENDFUNC
+*   Init
+
+************************************************************************
+FUNCTION CreateParser(llForce, llPragmaLines)
+****************************************
+LOCAL loBuilder, loValue, loBridge
+
+IF llForce OR ISNULL(this.oPipeline)
+	loBridge = this.oBridge
+	loBuilder = loBridge.CreateInstance("Markdig.MarkdownPipelineBuilder")
+
+	loValue = loBridge.Createcomvalue()
+	loValue.SetEnum("Markdig.Extensions.EmphasisExtras.EmphasisExtraOptions.Default")	
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseEmphasisExtras",loBuilder,loValue)
+
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseListExtras",loBuilder)	
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseCustomContainers",loBuilder)
+
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseFooters",loBuilder)
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseFigures",loBuilder)
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseFootnotes",loBuilder)
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseCitations",loBuilder)	
+	
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UsePipeTables",loBuilder,null)
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseGridTables",loBuilder)
+
+	loValue = loBridge.Createcomvalue()
+	loValue.SetEnum("Markdig.Extensions.AutoIdentifiers.AutoIdentifierOptions.GitHub")
+	loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseAutoIdentifiers",loBuilder,loValue)
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseAutoLinks",loBuilder)
+	
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseYamlFrontMatter",loBuilder)
+	loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UseEmojiAndSmiley",loBuilder,.T.)
+
+	IF this.lNoHtmlAllowed
+	   loBuilder = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","DisableHtml",loBuilder)
+	ENDIF
+
+	IF llPragmaLines
+	  loBuiler = loBridge.Invokestaticmethod("Markdig.MarkdownExtensions","UsePragmaLines",loBuilder)
+	ENDIF
+
+	THIS.oPipeline = loBuilder.Build()
+ENDIF
+
+RETURN this.oPipeline
+ENDFUNC
+*   CreateParser
+
+************************************************************************
+FUNCTION Parse(lcMarkdown, llUtf8, llDontSanitizeHtml)
+LOCAL lcHtml, loScriptTokens, loPipeline, lnOldCodePage
+
+IF !this.lEncodeScriptBlocks
+   loScriptTokens = TokenizeString(@lcMarkdown,"<%","%>","@@SCRIPT")
+ENDIF
+
+loPipeline = this.CreateParser()
+
+*** result always comes back as UTF-8 encoded
+IF (llUtf8)
+   lnOldCodePage = SYS(3101)
+   SYS(3101,65001)
+   lcMarkdown = STRCONV(lcMarkdown,9)
+ENDIF
+
+lcHtml = this.oBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",lcMarkdown,loPipeline)
+
+IF llUtf8
+  SYS(3101,lnOldCodePage)  
+ENDIF
+
+IF !THIS.lEncodeScriptBlocks
+  lcHtml = DetokenizeString(lcHtml,loScriptTokens,"@@SCRIPT")
+ENDIF
+
+IF PCOUNT() < 3
+   llDontSanitizeHtml = !THIS.lSanitizeHtml
+ENDIF   
+
+IF !llDontSanitizeHtml
+  lcHtml = THIS.SanitizeHtml(lcHtml)
+ENDIF
+
+lcHtml = TRIM(lcHtml,0," ",CHR(13),CHR(10),CHR(9))
+
+RETURN lcHTML   
+ENDFUNC
+*   Parse
+
+
+************************************************************************
+*  SanitizeHtml
+****************************************
+***  Function: Removes scriptable code from HTML. 
+************************************************************************
+FUNCTION SanitizeHtml(lcHtml, lcHtmlTagBlacklist)
+
+IF EMPTY(lcHtmlTagBlackList)
+	lcHtmlTagBlackList = "script|iframe|object|embed|form"
+ENDIF
+IF EMPTY(lcHtml)
+   RETURN lcHtml	
+ENDIF
+
+RETURN THIS.oBridge.InvokeStaticMethod("Westwind.WebConnection.StringUtils","SanitizeHtml",lcHtml, lcHtmlTagBlacklist)
+ENDFUNC
+*   SanitizeHtml
+
+ENDDEFINE
+```
+
+The key method is the `CreateParser()` which explicitly adds the features that we want to use with the parser. There are additional methods that help with optionally cleaning up HTML for safe rendering by removing script code and frames and other things that could allow XSS attacks against the rendered HTML as Markdown allows embedded HTML in the Markdown text.
+
+> In the samples there's another sublass called `MarkdownParserExtended` that adds a few more features to the parser that include code snippet parsing, expanding FontAwesomeIcons and a few other things. You can [look at the source code](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/blob/master/markdownParser.PRG) for more info.
+
+With this code in place you can now just create another helper method that uses this parser and cache it so we don't have to reload the pipeline and instance for each invocation:
+
+```foxpro
+************************************************************************
+*  Markdown
+****************************************
+***  Function: Converts Markdown to HTML
+***    Assume: Caches instance in __MarkdownParser
+***      Pass: lcMarkdown  - text to convert to HTML from Markdown
+***            lnMode      - 0/.F. - standard, 2 extended, 1 - standard, leave scripts, 3 - extended leave scripts
+***    Return: parsed HTML
+************************************************************************
+FUNCTION Markdown(lcMarkdown, lnMode, llReload, llUtf8, llNoSanitizeHtml, llNoHtmlAllowed)
+LOCAL loMarkdown, lcClass
+
+IF llReload OR VARTYPE(__MarkdownParser) != "O" 
+	IF EMPTY(lnMode)
+	   lnMode = 0
+	ENDIF   
+
+	lcClass = "MarkdownParser"
+	IF lnMode = 2
+	   lcClass = "MarkdownParserExtended"
+	ENDIF
+	
+	loMarkdown = CREATEOBJECT(lcClass)
+	PUBLIC __MarkdownParser
+	__MarkdownParser = loMarkdown
+	
+	IF lnMode = 1 OR lnMode = 3
+	   __MarkdownParser.lEncodeScriptBlocks = .F.  	  	   	  
+	ENDIF	
+	
+	__MarkdownParser.lSanitizeHtml = !llNoSanitizeHtml
+	__MarkdownParser.lNoHtmlAllowed = llNoHtmlAllowed
+ELSE
+    loMarkdown = __MarkdownParser
+ENDIF
+
+RETURN loMarkdown.Parse(lcMarkdown, llUtf8)
+ENDFUNC
+*   Markdown
+```
+
+#### Using Templates to make the Markdown Look Nicer
+
 
 
 ### Use a Two-Factor Authenticator Library
