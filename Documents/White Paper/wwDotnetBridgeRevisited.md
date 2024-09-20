@@ -188,9 +188,49 @@ loPerson.ToString()
 ? loPerson.AddAddress("1 Main","Fairville","CA","12345")
 ```
 
-because all of these operations work with simple types. It also work
+because all of these operations work with simple types they just work with direct access to the .NET object. You can directly call the methods and access properties without any special fix up or proxying.
 
+### Proxy Invocation for Problem Types and Helpers
+While simple types work just fine for direct access, .NET has many more types that are not compatible with COM or FoxPro types and can't be converted. This means direct access is simply not possible.
 
+wwDotnetBridge provides a host of helper functions that effectively proxy indirect access to .NET functionality by translating data coming from FoxPro into .NET and vice versa. By hosting this proxy code inside of .NET, the proxy can access all features of .NET and - as best as possible - translate between the .NET and FoxPro incompatibilities.
+
+In the example above, the `loPerson.Addresses` property is an array, a .NET collection type. Collection types and especially generic lists and dictionaries (`List<T>` or `Dictionary<TKey, TValue>` ) are very common in .NET for example. However, FoxPro and COM don't support Generics at all, and even basic arrays and lists are not well supported via COM interop. In addition, Value types, Enums or accessing any static members is not supported, but can be accomplished via wwDotnetBridge helpers.
+
+So `loPerson.Addresses` is an array of address objects, so rather than directly accessing it via:
+
+```cs
+loAddress = loPerson.Addresses[1]; && doesn't work
+```
+
+you have to indirectly access the address array which returns a ComArray helper:
+
+```cs
+loAddresses = loBridge.GetProperty(loPerson,"Addresses");
+lnCount = loAddresses.Count
+loAddress = loAddress.Item(0);
+? loAddress.Street
+? loAddress.ToString()
+```
+
+`GetProperty()` is one of the most common helper methods along with `InvokeMethod()` and `SetProperty()`. Use these methods when direct access does not work or when you know you're dealing with types that don't work via FoxPro or COM.
+
+These methods use Reflection in .NET to perform their task and you specify an base instance that the operation is applied to (ie. `loPerson`) and a Member that is executed as a string (ie. `"Addresses"`). 
+
+Here's what InvokeMethod looks like:
+
+```cs
+lcName = "Rick"
+loPerson.InvokeMethod(loPerson,"DifficultMethod", lcName) 
+```
+
+There are also methods to invoke static members:
+
+```cs
+? loBridge.InvokeStaticMethod("System.String","Format", "Hello {0}", lcName)
+```
+
+There are many more helpers in the class and we'll see more of them in the examples in the later part of this article.
 
 ## How does wwDotnetBridge Work
 wwDotnetBridge acts as an intermediary between FoxPro and .NET. In a nutshell, wwDotnetBridge is a loader for the .NET framework, and a proxy interface for FoxPro which allows FoxPro code to pass instructions into .NET code when native direct access to components is not supported. You get the best of both worlds: Native direct COM access when possible, and proxied indirect execution that translates between .NET and COM/FoxPro types to access features that otherwise wouldn't be available.
