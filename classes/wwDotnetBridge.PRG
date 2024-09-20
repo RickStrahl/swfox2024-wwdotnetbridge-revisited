@@ -7,6 +7,7 @@ SET PROCEDURE TO wwDotnetBridge ADDITIVE
 
 #IF IS_WESTWIND
 	#DEFINE WWC_CLR_HOSTDLL wwipstuff.dll 
+	
 
 	*** Other dependencies
 	* .NET Runtime 4.0+ or .NET Core 5+
@@ -1078,7 +1079,11 @@ ENDFUNC
 ************************************************************************
 FUNCTION GetTypeName(lvValue)
 loType = THIS.GetType(lvValue)
-RETURN this.InvokeMethod(loType,"ToString")
+IF VARTYPE(loType) == "O"
+	RETURN this.GetProperty(loType,"FullName")
+ELSE
+    RETURN "null"
+ENDIF	
 ENDFUNC
 *   GetTypeName
 

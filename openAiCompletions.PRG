@@ -15,6 +15,14 @@ loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnecti
 ? loBridge.cErrorMsg
 loConnection.ApiKey = lcOpenAiKey
 
+*** Using Ollama SMLs Locally
+*!*	loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OllamaOpenAiConnection")
+*!*	? loBridge.cErrorMsg
+*!*	loConnection.ModelId = "llama3"
+*loConnection.ModelId = "phi3.5"
+
+
+
 IF EMPTY(lcPrompt)
    lcPrompt = "How do I make an Http call in FoxPro with wwHttp?"
 ENDIF
@@ -23,7 +31,6 @@ IF EMPTY(lcSystemPrompt)
 ENDIF  
 
 poCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
-
 
 loCallback = CREATEOBJECT("OpenAiCallback")
 loBridge.InvokeTaskMethodAsync(loCallback, poCompletions,"Complete",lcPrompt, lcSystemPrompt, .F.)
@@ -50,7 +57,8 @@ ENDIF
 
 lcHtml = Markdown(lcResult)
 
-ShowHtml(lcHtml)
+? "Done!"
+ShowWebPage(lcHtml)
 
 ENDFUNC
 

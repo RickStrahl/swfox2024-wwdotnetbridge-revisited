@@ -25,7 +25,7 @@ This new version of .NET - although it had a rough initial start - is also mostl
 Today you can build applications for Windows, Mac or Linux, developing applications on these platforms using native editors either with integration tooling or command line tools that are freely available via the .NET SDK. The SDK includes all the compiler tools to build, run and publish .NET applications from the command line without any specific tooling requirements.
 
 ## .NET and FoxPro
-Although .NET Core is the *new and shiny* new framework, **for FoxPro developers it's still preferable to continue using the built-in classic .NET Framework**. The .NET Runtime is part of Windows and so it's always available - **there's nothing else to install**. It's the easiest integration path for FoxPro applications. For this reason I strongly recommend you use .NET Framework in lieu of .NET Core or .NET Standard components *if possible*.
+**For FoxPro developers it's preferable to use components that use the old 'full framework' libraries** when available even though .NET Core is the *new and shiny* new framework. The full .NET Framework (NetFX) is part of Windows and so it's always available - **there's nothing else to install** to run it and so it's the easiest integration path for FoxPro applications. For this reason I strongly recommend you use .NET Framework in lieu of .NET Core or .NET Standard components *if possible*.
 
 However, it is possible to use .NET Core components with FoxPro and wwDotnetBridge. But the process of doing so tends to be more complicated as .NET Core's assembly loading is more complex, often requiring many more support assemblies that are not always easy to identify.
 
@@ -34,7 +34,7 @@ In order to use .NET Core you need to ensure a matching .NET Core runtime is ins
 The good news is that most components today still use multi-targeting and support both .NET Framework (or .NET Standard which is .NET Framework compatible) and .NET Core targeting and you can geneally find .NET Framework components that work more easily in FoxPro. 
 
 > #### @icon-lightbulb Stick to .NET Framework
-> If at all possible aim for using .NET Framework if you're calling .NET code from FoxPro. Only rely on .NET Core components if there is no alternative in .NET Framework available.
+> Bottom Line: If at all possible aim for using .NET Framework if you're calling .NET code from FoxPro. Only rely on .NET Core components if there is no alternative in .NET Framework available.
 
 ## What is wwDotnetBridge?
 wwDotnetBridge is an **open source, MIT licensed and therefore free as in free beer** FoxPro library, that allows you to load and call most .NET components from FoxPro. It provides registrationless activation of .NET Components and helpers that facilitate accessing features that native COM Interop does not support.
@@ -464,6 +464,20 @@ Ok enough theory - let's jump in and put all of this into practice with some use
 10. Create a .NET Component and call it from FoxPro
 
 ### wwDotnetBridge 101 – Load, Create, Invoke, Get/Set
+
+<i><small>
+
+**Demonstrates:**
+
+* Basics of wwDotnetBridge
+* Loading the library
+* Loading assemblies
+* Creating instances
+* Accessing members
+* Using special unsupported types
+
+</small></i>
+
 Lets start with a basic usage example that demonstrates how wwDotnetBridge works.
 
 For this 101 level example I'm going to use a custom class in custom compiled project I created for examples for this session. We'll talk about how to create this class later, but for now just know that this project creates an external .NET assembly (.dll) from which we'll load a .NET class, and call some of its members. 
@@ -591,24 +605,35 @@ You've just seen how to:
 * Work .NET Collections from FoxPro
 
 ### Create a powerful String Formatter
-The next example is a little more practical in that it provides most of .NET's string formatting features right into Visual FoxPro. .NET uses string formatters that allow powerful formatting of things like dates and numbers along with C style string format templates.
 
-This sample demonstrates:
+<small><i>
 
-* Calling into native .NET functions in the .NET Base Library
-* Invoking a static method
+**Demonstrates:**
+
+* Using .NET native String functions to format strings
+* Calling native .NET methods on objects without assembly loading
+* Invoking static methods
+* Creating simple wrapper functions for .NET functionality
+
+</i></small>
+
+This example is a little more practical: It makes most of .NET's string formatting features available to Visual FoxPro and exposes these as easy to use FoxPro functions. .NET has built-in string formatteing support that allow powerful formatting of things like dates and numbers along with C style string format templates.
 
 In this example we'll access two native .NET features:
 
-* .NET's `.ToString()` object method which supports formatting
-* The `string.FormatString()` static method which allows for C Style Template strings
+* `ToString()`   
+This method is a base method on the lowest level .NET object which is `System.Object` and `ToString()` exists on every object and value in .NET except `null`. Each type can implement a custom implementation relevant to the type, or 
+* `System.String.FormatString()`  
+Is a C-Style template string expansion method, that can be used to embed values more easily into strings using `{n}` value expansion. Additionally `FormatString()` supports the same format specifiers that `ToString()` supports on any templated values.
 
-#### Formatting Dates and Numbers or any Formattable .NET Type
-Format string has the ability to format any type that supports formatting via the `ToString()` method. `ToString()` is one of .NET's base object methods meaning **every object** (including strings, numbers, bools etc.) in .NET have a `.ToString()`. Any class can override `ToString()` and optionally provide the ability to format the output via a format string.
+#### Formatting Dates and Numbers or any Formattable .NET Type with ToString()
+The .NET `System.Object` base class exposes a `ToString()` method which ensures that **every .NET object and value** (except `null`) has a `ToString()` method, which allows you to write out any object as a string. Most common .NET types have practical `ToString()` implementations so that a number will write out the number as string, and date writes out in a common date format. More complex objects have custom `ToString()` implementations, and if you create your own classes you can override `ToString()` with your own string representation that makes sense.
 
-The format specifier is similar in behavior to `Transform()` in FoxPro, except that .NET formatters tend to be much more flexible with many more options.
+Additionally `ToString()` supports an optional format specifier for many common types, which is specifically useful for numbers and dates since these can be represented in so many different ways. 
 
-The most common formatters are Date and Number formatters, but many other types have formatters.
+`ToString()` with a format specifier is similar in behavior to `Transform()` in FoxPro, except that .NET formatters tend to be much more flexible with many more options.
+
+The most common formatters are Date and Number formatters, but many other types also have formatters. To do this I'll implement  a `FormatValue()` function in FoxPro shown after the examples.
 
 Let's look at some Date formatting first:
 
@@ -658,7 +683,7 @@ lcFormat = "ddd, dd MMM yyyy HH:mm:ss zzz"
 * 2016-06-06 22:41:44Z
 ```
 
-There are **a lot** of different time formats available including fully spelled out versions. By default all date formats are in the currently active user locale (ie. `en_US` or `de_DE`)  and the value will adjust based on which language you are running your application in. It's also possible to pass a specific culture to format for some other language and formatting, but that's not supported for the helpers discussed here.
+There are **a lot** of different time formats available including fully spelled out versions. By default all date formats are in the currently active user locale (ie. `en_US` or `de_DE`)  and the value will adjust based on which language you are running your application in. It's also possible to pass a specific .NET Culture to format for some other language and formatting, but that's not supported for the helpers discussed here.
 
 Number formatting is very similar:
 
@@ -669,22 +694,22 @@ Number formatting is very similar:
 
 *** Number formats
 
-lcFormat = "00"
+lcFormat = "00"  && fills with leading 0's
 ? lcFormat + ": " + FormatValue(2,"00")
 * 02
 
 ? lcFormat + ": " + FormatValue(12,"00")
 * 12
 
-lcFormat = "c"
+lcFormat = "c"    && currency (symbol, separator and default 2 decimals
 ? lcFormat + ": " +  FormatValue(1233.22,lcFormat)
 * $1,233.22
 
-lcFormat = "n2"
+lcFormat = "n2"   && separators and # of decimals
 ? lcFormat + ": " +  FormatValue(1233.2255,lcFormat)
 * $1,233.23
 
-lcFormat = "n0"
+lcFormat = "n0"   && separators and no decimals
 ? lcFormat + ": " +  FormatValue(1233.2255,lcFormat)
 * $1,233
 ?
@@ -700,6 +725,7 @@ To implement the above `FormatValue()` function, I use a simple FoxPro wrapper f
 ***            for whatever the text ends up with
 ***      Pass:  Pass in any .NET value and call it's ToString()
 ***             method of the underlying type. This 
+***             Optional FormatString ("n2", "MMM dd, yyyy" etc)
 ***    Return: Formatted string
 ************************************************************************
 FUNCTION FormatValue(lvValue,lcFormatString)
@@ -720,14 +746,14 @@ ENDFUNC
 *   FormatValue
 ```
 
-This function basically works of the value that we are passing into .NET and relies on the fact that .NET treats any value or object as an object. So a Date or Number, Boolean all are objects and we can call `ToString(formatString)` on those values. So it's literally a single method call. 
-  
-If no parameter is passed we just call 'ToString()` without parameters, otherwise we call it with the `lcFormatString` parameter. Note that each overloaded .NET method requires a separate FoxPro call - even if the .NET method has default values for the method. This is because .NET internally looks at full method signatures and default parameter values are not part of the meta data that is used to match the right signature to call.
+This function works off the value that we are passing into .NET and relies on the fact that .NET treats any value or object as an object. So a Date or Number, Boolean all are objects and we can call `ToString(format)` on those values. So it's literally a single method call. 
 
-We'll see this more vividly in the `FormatString()` function we'll discuss next.
+If no parameter is passed we just call `ToString()` without parameters, otherwise we call `ToString(format)`. Note that each overloaded .NET method requires a separate FoxPro call - even if the .NET method has default values for the method. This is because .NET internally looks at full method signatures and default parameter values are not part of the meta data that is used to match the right signature to call so we **always have to call the exact signature that we want to use** including potentially missing parameters. This can make translating C# code to FoxPro a little more tricky at times and is one of the reasons you should always verify method signatures in a Dissassembler tool like ILSpy or test methods in LinqPad with the full parameter structure.
+
+We'll see this even more vividly in the `FormatString()` function we'll discuss next as it can take a variable number of parameters.
 
 #### String Formatting with C Style String Templates
-Most C style languages has a `printf()` style string formatting functionality where you can 'inject' embeddable values into the string. This is a **compile time feature** where the compiler can figure out the reference to a variable at compile time and then create a string that embeds the relevant `ToString()` value into string. 
+If you're old skool like me, you probably remember `printf()` from your C Computer Science classes back in the day. Most C style languages have `printf()` style string formatting functionality where you can 'inject' embeddable values into the string. This is not unlike FoxPro's `TextMerge()` function, but much more efficient and with the added benefit of the same string formatting available for embedded values as discussed for `FormatValue()`.
 
 Here's what this looks like when called from FoxPro:
 
@@ -744,25 +770,53 @@ You can call `FormatString()` with a string 'template' that contains `{0-n}` exp
 
 Additionally you can also apply format strings as described in `FormatValue()` so you can use `{0:MMM dd, yyy}` for a  Date expansion for example.
 
-Note that `FormatString()` uses `ToString()` to format the value, so this works with any kind of object although many actual objects don't implement it and instead return just the object name. However, if a class implements `ToString()` and has custom output - as I did in the `wwDotnetBridge101` example and the `Person.ToString()` method which outputs the display name and address you can display that as part of a format string too:
+Note that `FormatString()` uses `ToString()` to format the value, so this works with any kind of object, although many actual objects don't implement it and instead return just the object name as `Namespace.Classname`. 
+
+However, if a class implements a custom `ToString()`method, it can do **any kind of custom formatting** - as I did in the `wwDotnetBridge101` example and the `Person.ToString()` method, which outputs a full name and address block as a string:
+
+```csharp
+// Person
+public string DisplayName => (Name ?? string.Empty) +  
+                             (!string.IsNullOrEmpty(Company) ?  $" ({Company})" : string.Empty);
+                               
+public override string ToString()
+{
+    return DisplayName + "\r\n" +                  
+           Addresses.FirstOrDefault()?.ToString(); 
+}
+
+// Address
+public override string ToString()
+{
+    return Street + "\r\n" + City + "\r\n" + State + " " + Zip;
+}
+```
+
+You can then use that in FoxPro simply with:
 
 ```foxpro
 *** Load loPerson .NET Object
 ? loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
-
-*** Load up a person object and set some values on person and first address
 loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
 loPerson.Name = "Rick Strahl"
 loAddresses = loBridge.GetProperty(loPerson,"Addresses")
 loAddress = loAddresses.Item(0)
-loAddress.City = "SomeTown Ugly Town USA"
+loAddress.City = "Anywhere USA"
 
+*** Both of these work
+? FormatValue(loPerson)
+? loPerson.ToString()
+```
+
+The same also works with `FormatString()`:
+
+```foxpro
 ? FormatString("Person Object:\r\n{0} and the time is: {1:t}", loPerson, DATETIME())
 ```
 
 `FormatString()` is very powerful and quite useful to quickly create string structures.
 
-> FormatString() also supports several C# string escape characters like `\r` `\n` and `\t` although that's not natively supported (.NET treats a foxPro string as is and escapes any special characters - I escape the strings in FoxPro before passing to .NET)
+> FormatString() also supports several C# string escape characters like `\r` `\n` and `\t` although that's not natively supported as .NET treats a foxPro string as is and escapes any special characters. However my implementation adds explicit support for `\n\r\t\0` and escape them before passing to .NET (which has its own issue as you can't de-escape those values))
 
 Here's what the FoxPro `FormatString()` function looks like:
 
@@ -806,9 +860,8 @@ DO CASE
 	CASE lnParms = 11
 		RETURN loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1,lv2,lv3,lv4,lv5,lv6,lv7,lv8,lv10)
 	OTHERWISE
-	    THROW "Too many parameters for FormatString"
+	    ERROR "Too many parameters for FormatString"
 ENDCASE
-
 
 ENDFUNC
 *   StringFormat
@@ -829,8 +882,6 @@ lcValue = STRTRAN(lcValue, "\t", CHR(9))
 lcValue = STRTRAN(lcValue, "\0", CHR(0))
 
 RETURN lcValue
-ENDFUNC
-*   EscapeCSharpString
 ```
 
 The first thing you notice here's is that we are calling a **static method** on the `System.String` class. Static methods are non-instance method, meaning you don't first create an instance. Instead the methods are static and bound to a specific type. In FoxPro this is similar to a UDF() function or plain function that is globally available. Static methods and properties are referenced by the type name - ie. `System.String` instead of the instance, followed by the method or member name. 
@@ -841,7 +892,7 @@ Here we call the static Format method with the format string and a single value 
 loBridge.InvokeStaticMethod("System.String","Format",lcFormat,lv1)
 ```
 
-In this method you'll noticve the requirement to call each of the overloads for each parameter variation, which looks tedious but actually is the most efficient way to call this method. There are other overloads of `InvokeStaticMethod()` that can be passed an array of parameters, and while that would be cleaner to look at and allow for an unlimited number of parameters, it's less efficient as the array has to be created and parsed on both ends. Passing values directly is significantly faster and for a low level utility method like this it's definitely beneficial to optimize performance as much as is possible. 
+In this method, you'll notice the requirement to call each of the overloads for each parameter variation, which looks tedious but actually is the most efficient way to call this method. There are other overloads of `InvokeStaticMethod()` that can be passed an array of parameters, and while that would be cleaner to look at and allow for an unlimited number of parameters, it's less efficient as the array has to be created and parsed on both ends. Passing values directly is significantly faster, and for a low-level utility method like this, it's definitely beneficial to optimize performance as much as possible.
 
 #### Summary
 In this example you learned:
@@ -851,6 +902,17 @@ In this example you learned:
 * How .NET Format Strings and ToString() work
 
 ### Add Markdown Parsing to your Applications
+
+<small><i>
+
+**Demonstrates:**
+
+* Using a third party NuGet library
+* Calling static methods
+* Creating a FoxPro wrapper class to abstract functionality
+
+</i></small>
+
 The next example demonstrates using a Markdown to HTML parser. Markdown is a very useful text format that uses plain text mixed with a few readable text markup expressions that allow create rich HTML document text via plain text input. It can be used in lieu of WYIWYG editors and because it can be rendered very quickly allows you to actually preview content as you type in real time. So rather than typing in a simulated text editor to tries to simulate the final markup, you write plain text with markup simple expressions and look at a preview (or not) to see what the final output would look like.
 
 In short it's a great tool for writing text that needs to be a little more fancy than just a wall of plain text. It's super easy to add bold, italic, lists, notes, code snippets, embed link and images using Markdown. 
@@ -866,7 +928,6 @@ I'm a huge fan of Markdown and I've integrated it into several of my application
 * West Wind Message Board (used for message text)
 * My Weblog - posts are written in Markdown and rendered to HTML
 * Articles like this one - written in Markdown
-
 
 
 #### Using Markdig for Markdown To HTML Conversion
@@ -1126,11 +1187,382 @@ ENDFUNC
 ```
 
 #### Using Templates to make the Markdown Look Nicer
+Markdown is useful **especially in Web applications** where HTML can be directly displaying inside of a Web Page. But if you just generate the HTML and display it **as is** the output is somewhat underwhelming as you're getting the browser's default styling.
+
+If you're using Markdown in desktop applications what you'd want to do, likely is to create an HTML page template into which to render the generated HTML, with CSS styling applied so you can produce output that looks a little more user friendly:
+
+![Markdown Template Output](MarkdownTemplateOutput.png)
+
+This actually uses styling I picked up from Markdown Monster via templating. This works by creating an HTML template and embedding the rendered markdown into it:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="<< pcBasePath >>"/>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8"/>
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <link href="<<pcThemePath>>..\Scripts\fontawesome\css\font-awesome.min.css" rel="stylesheet"/>
+    <link href="<<pcThemePath>>Theme.css" rel="stylesheet"/>
 
 
+    <script src="<<pcThemePath>>..\Scripts\jquery.min.js"></script>
+    <link href="<<pcThemePath>>..\Scripts\highlightjs\styles\vs2015.css" rel="stylesheet"/>
+    <script src="<<pcThemePath>>..\Scripts\highlightjs\highlight.pack.js"></script>
+    <script src="<<pcThemePath>>..\Scripts\highlightjs-badge.js"></script>
+    <script src="<<pcThemePath>>..\Scripts\preview.js" id="PreviewScript"></script>
+
+</head>
+<body>
+<div id="MainContent">
+  <!-- Markdown Monster Content -->
+  <<pcHTML>>
+  <!-- End Markdown Monster Content -->
+</div>
+
+</body> 
+</html>
+```
+
+I then use a `ShowWebPage.prg` file to render the HTML into the template to get the desired styling and other feature support.
+
+```foxpro
+* FUNCTION ShowWebPage()
+LPARAMETERS lcHtml
+
+ShowHtmlLocal(lcHtml)
+
+************************************************************************
+FUNCTION ShowHTMLLocal
+**********************
+***  Function: Takes an HTML string and displays it in the default
+***            browser. 
+***    Assume: Uses a file to store HTML temporarily.
+***            For this reason there may be concurrency issues
+***            unless you change the file for each use
+***      Pass: lcHTML       -   HTML to display
+***            lcFile       -   Temporary File to use (Optional)
+***            loWebBrowser -   Web Browser control ref (Optional)
+************************************************************************
+LPARAMETERS lcHTML
+PRIVATE pcBasePath, pcTitle, pcHtml, pcThemePath
+
+lcHTML=IIF(EMPTY(lcHTML),"",lcHTML)
+lcFile = SYS(2023)+"\ww_HTMLView.htm"
+pcBasePath = ADDBS(SYS(5) + CURDIR())
+pcThemePath = pcBasePath + "Assets\Westwind\"
+pcTitle = IIF(EMPTY(lcTitle),"",lcTitle)
+lcTemplate = "./Assets/Westwind/Theme.html"
+
+IF !EMPTY(lcTemplate)
+   lcT =  FILETOSTR(lcTemplate)
+   pcHtml = lcHtml
+   lcHtml = TEXTMERGE(lcT)
+ENDIF
+
+STRTOFILE(STRCONV(lcHTML,9),lcFile)
+
+ShellExecute(lcFile)
+```
+
+To use this now becomes pretty simple:
+
+```foxpro
+loParser = CREATEOBJECT("MarkdownParserExtended")
+
+TEXT TO lcMarkdown NOSHOW
+This is some sample Markdown text. This text is **bold** and *italic*.
+
+* List Item 1
+* List Item 2
+* List Item 3
+
+Great it works!
+
+> #### @icon-info-circle Examples are great
+> This is a block quote with a header
+
+
+### Link Embedding is easy
+
+* [Sample Repositor](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited)
+* [Source Code for this sample on GitHub](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/blob/master/markdownTest.PRG)
+
+### Markdown Monster wants to eat your Markdown!
+
+* [Download Markdown Monster](https://markdownmonster.west-wind.com)
+
+![](https://markdownmonster.west-wind.com/Images/MarkdownMonsterLogo.jpg)
+
+### The Markdown Editor for Windows
+
+ENDTEXT
+
+*** Render the page
+lcHtml = loParser.Parse(lcMarkdown)
+? lcHtml
+
+*** 
+ShowWebPage(lcHtml)
+```
+
+Note that this example is hacked together using the existing Markdown Monster templates, so it it needs a little work to render quite right, but the idea is this:
+
+* Set up a base HTML page
+* Text Merge any paths and related things into the page
+* Text Merge the rendered Html
+
+Have a fully reusable HTML template that you can easily call to render consistent looking Markdown. This is essentially what I do in Markdown Monster, Help Builder (both desktop apps) as well as on my Weblogs - all use Markdown text rendered into a base template.
+
+Markdown is an extremely powerful tool, and once you use it for a few things it becomes addicitive and you will loathe going back to a full editor like Word for most writing or documentation tasks.
 
 ### Use a Two-Factor Authenticator Library
 
+<small><i>
+
+**Demonstrates:**
+
+* Use a third party library
+* Make simple direct COM calls
+* Very useful to create Two-Factor Auth for Web and Desktop apps
+* NuGet Library used: [GoogleAuthenticator](https://github.com/BrandonPotter/GoogleAuthenticator)
+
+</i></small>
+
+Two factor authentication is a second level of security that you can use **in addition** to typical username/password or similar login style security. Two-Factor auth serves a second unrelated safety mechanism to verify an account which makes it much harder to hack an account even if passwords are compromised.
+
+There are many mechanisms that can be used for two-factor auth including using SMS messages to verify a user, or using a separate email address. However, a somewhat newer approach uses Authenticator apps that can be used to generate a **key generator** that can then generate new validation codes that can be checked. The two factor one time passwords use a standard hashing mechanism that is supported by many different tools including third party apps like Google Authentication, Microsoft Authenticator and Authy, as well as password managers like 1Password, LastPass and so on as hardware keys like Yubikey. All of these apps and devices uses the same algorithms to set up and then validate two factor one time codes. Any of these apps or devices can be used but once you create a two-factor setup you have to use the same app or device to validate.
+
+Two-Factor auth is fully self-contained which means there's no need to use a third party service or any special tools beyond some software or hardware device that can handle creating the setup and validation logic.
+
+Two factor authentication is made of two specific steps:
+
+* **Setting up Two-Factor Authentication**  
+This involves creating a setup key that is maintained by the two-factor app or device. Typically this is displayed as a QR Code that can be scanned with a phone or from a Web app (in desktop Web browser). Alternately this code is also displayed as a numeric key you can manually type into an authenticator or hardware device where QR codes are not supported. To generate a new two-factor setup you typically provide some unique secret identifier that is then later also used to validate two-factor codes.
+
+* **Validating a One Time Passkey**  
+Once a Two-Factor auth setup has been configured, you then need to validate it. To validate you ask the Authenticator app for a new two-factor one time code and you validate it in combination with your unique application level secret identifier. Based on the two-factor one time code and and the identifier the code can be validated as valid within a given time frame.
+
+Here's what this looks like:
+
+![Two Factor Qr Code](TwoFactorQrCode.png)
+
+What I'm presenting here are the **tools to do two-factor** authentication, not an actual implementation as that's way too complex to tackle here. If you are interested in full two-factor implementation for a Web site see my [post on Two-Factor authentication in a .NET Web application](https://weblog.west-wind.com/posts/2023/May/17/Implementing-TwoFactor-Auth-using-an-Authenticator-app-in-ASPNET).
+
+In a live appplication here's what this looks like.
+
+**QR Code Setup**
+
+![TwoFactor Setup WebApp](TwoFactor-Setup-WebApp.png)
+
+As a user you can capture the QR code in an authenticator app like Authy here:
+
+![Two Factor Authy](Two-Factor-Authy.png)
+
+or, more conveniently as part of a password manager like 1Password as I do:
+
+![Two Factor ScanQr 1Password](Two-Factor-ScanQr-1Password.png)
+
+
+App presents a QR code to initially set up two factor authentication. This is a one time operation where the app generates a new secret key and then stores that secret key with the user/customer record to later use for validation.
+
+Then when a user logs in, they first log in with their username and password, and then are immediately asked for the two-factor one time code as well.
+
+![Two Factor Validation In Web](TwoFactorValidationInWeb.png)
+
+And you can fill that in via your authenticator app, or as I do here with 1Password:
+
+![TwoFactor 1Password Validation](TwoFactor-1Password-Validation.png)
+
+#### Two-Factor Auth with the GoogleAuthentor Library
+Unlike the name suggests, this library is not limited to Google Authenticator. It works with any two-factor authenticator like Authy, Microsoft Authenticator and 1Password. The algorithm that is used for two-factor auth hashing is generic so it works with any tool that supports these protocols.
+
+The code to use this library from FoxPro is very simple. The easiest way to use it is to create a small wrapper class:
+
+```foxpro
+*************************************************************
+DEFINE CLASS TwoFactorAuthentication AS Custom
+*************************************************************
+
+oBridge = null
+oAuth = null
+
+************************************************************************
+FUNCTION Init()
+****************************************
+this.oBridge = GetwwDotnetBridge()
+
+IF (!this.oBridge.LoadAssembly("Google.Authenticator.dll"))
+   ERROR this.oBridge.cErrorMsg
+ENDIF  
+THIS.oAuth = this.oBridge.CreateInstance("Google.Authenticator.TwoFactorAuthenticator")
+IF VARTYPE(THIS.oAuth) # "O"
+   ERROR "Failed to load TwoFactorAuthenticator: " + this.oBridge.cErrorMsg
+ENDIF
+
+ENDFUNC
+
+*********************************************************************************
+FUNCTION GenerateSetupCode(lcApplicationName, lcEmail, lcSecretKey, lnResolution)
+****************************************
+***  Function: Generates a structure that generates an object containing 
+***            a QR code image and manual setup code
+***    Assume: Application and Email have no effect on code/qr generation
+***      Pass: lcApplicationName  - Name of application
+***            lcEmail            - An email address to identify user
+***            lcSecretKey        - Secret key tied to the user to identify
+***            lnResolution       - larger numbers result in larger CR codes (10)
+***    Return: TwoFactorSetup object or null
+************************************************************************
+LOCAL loAuth
+
+IF EMPTY(lnResolution)
+   lnResolution = 10
+ENDIF   
+
+loSetupInfo = THIS.oAuth.GenerateSetupCode(lcApplicationName,;
+   lcEmail, ;
+   lcSecretKey, ;
+   .F., lnResolution)
+   
+loResult = CREATEOBJECT("TwoFactorSetup")
+loResult.cQrCodeImageData = loSetupInfo.QrCodeSetupImageUrl
+loResult.cSetupKey  = loSetupInfo.ManualEntryKey
+loResult.cCustomerSecret = lcSecretKey
+
+RETURN loResult
+ENDFUNC
+
+************************************************************************
+FUNCTION ValidatePin(lcSecretKey, lcPin)
+****************************************
+lcPin = STRTRAN(lcPin, " " ,"")
+RETURN THIS.oAuth.ValidateTwoFactorPIN(lcSecretKey, lcPin)
+ENDFUNC
+
+ENDDEFINE
+
+
+*************************************************************
+DEFINE CLASS TwoFactorSetup AS Custom
+*************************************************************
+
+*** Base64 Data Url that contains the image data 
+
+cQrCodeImageData = ""
+
+
+*** Typable Version of the QrCode data
+cSetupKey = ""
+
+*** Unique Customer Key - pass and save with your app
+cCustomerSecret = ""
+
+************************************************************************
+FUNCTION QrCodeHtml(llImageOnly)
+****************************************
+IF (llImageOnly)
+   RETURN [<img src="] + this.cQrCodeImageData + [" />]
+ENDIF
+
+TEXT TO lcHtml NOSHOW TEXTMERGE
+<html>
+<body>
+<div style="text-align: center; max-width: 500px">
+	<img src="<<this.cQrCodeImageData>>" />
+	<div style="font-size: 1.5em; font-weight: 600">
+	<<this.cSetupKey>>
+	</div>
+</div>
+</body>
+</html>
+ENDTEXT
+
+RETURN lcHtml
+* QrCodeHtml
+
+ENDDEFINE
+*EOC TwoFactorSetup
+```
+
+The class only has two methods that wrap the basic behavior to create a new Two-Factor setup and to validate it.
+
+#### Generating and Displaying a QR Setup Code
+Let's start with how to generate and then display the QR Code:
+
+```foxpro
+*** For demo only (ShowHtml()/InputForm()/GetUniqueId())
+DO wwutils
+
+*** Generate a Customer Secret key 
+*** In an application this will be something that identifies the user
+*** with a given account, but it needs to be something that is not known
+*** typically a generated UniqueId stored in a customer record (TwoFactorKey in db for example)
+lcSecret = GetUniqueId(12)    
+
+loAuth = CREATEOBJECT("TwoFactorAuthentication")
+loSetup  = loAuth.GenerateSetupCode("Westwind.Webstore",;
+                                    "rick@test-my-site.com", lcSecret)
+
+ShowHtml( loSetup.QrCodeHtml())
+```
+
+Yeah pretty simple, eh? To start you need some sort of unique ID that you need to store with your application once the two-factor authentication has been enabled. This key is the shared secret between you and the authenticator and it's needed to validate two-factor codes. Ideally you want a random value for this and store it as a seperate field in your user or customer database that identifies a user.
+
+You call `GenerateSetupCode()` to generate the QrCode or manual setup code which are used initialiaze the Authenticator for your app. 
+
+The method returns an `loSetup` structure that contains the `cQrCodeImageData` which is HTML base64 encoded image data that can be directly assigned to an `<img src="" />` attribute. We can take advantage of that to display the QR code quite easily in an HTML page as shown in the initial examples.
+
+The Setup class includes a mechanism to render the image as HTML into a page that can be displayed:
+
+![Two Factor QrCodeRenderedInBrowser](Two-Factor-QrCodeRenderedInBrowser.png)
+
+You can see the image tag:
+
+```html
+<img src="data:image/png;base64,<longBase64Text>"  />
+```
+
+Alternately if you want to capture the actual image data you can parse the encoded `cQrCodeImageData`, extract the base64 text and use `STRCONV()` to turn that into binary data that you can display in an image control which would also work.
+
+The idea with this method is that you do this for setting up your authenticator from the QR code or setup code.
+
+As part of the setup process you'll also need to verify that it's working **before you enable two-factor authentication**. So a typical Web Form will ask to scan the QR Code and then also provide an initial one time code to verify that it works. Only after that code has been verified should you actually enable two-Factor auth in your application.
+
+#### Validating a Two-Factor One-Time Code
+Once Two-Factor auth has been enabled, you can now log in with your username/password auth and then immediately also check the two factor auth.
+
+```foxpro
+loAuth = CREATEOBJECT("TwoFactorAuthentication")
+
+*** Test with a 'known' Customer Secret Key (from my site's test account)
+*** In a real app you'd retrieve this from a user/customer record
+lcSecret = GETENV("TWOFACTOR_SECRETKEY")
+
+*** Capture Pin (lookup in 1Password, Authy, Google or Microsoft Authenticator, Yubikey etc.
+lcPin = InputForm("","Enter generated two-factor pin")
+IF EMPTY(lcPin)
+   RETURN
+ENDIF
+
+*** Check the One Time Code
+If(loAuth.ValidatePin(lcSecret,lcPin))
+   ? "Pin has been validated"
+ELSE
+   ? "Invalid Pin code"   
+ENDIF
+```
+
+So then I can use my matching user account that matches the secret key, and now use the generated one-time code out of 1Password:
+
+![Two Factor Validating In Desktop](Two-Factor-Validating-In-Desktop.png)
+
+I can paste the value and the authenticator checks for validity.
+
+#### Two-Factoring: Logic is up to you
+The code I've shown provides the logistics, but how you implement is up to you. You can use Two-Factor auth in Web apps where it's quite common, but as you've seen here it's also possible to do this in Desktop applications as long as you can display a QR code - or you can optionally just use the Manual Setup code.
 
 ### Add Spellchecking to your applications
 
@@ -1205,10 +1637,19 @@ ENDFUNC
     * Create FoxPro Wrappers for .NET Code
 
 ## Resources
-
+* [wwDotnetBridge Documentation](https://webconnection.west-wind.com/docs/_24n1cfw3a.htm)
 * [GitHub Repository](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited)
     * Code Samples
     * White Paper
     * Slides
 * [Get wwDotnetBridge from GitHub](https://github.com/RickStrahl/wwDotnetBridge)
 * [Slides for SWFox 2024 Session](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx) 
+
+ <div style="margin-top: 30px;font-size: 0.8em;
+            border-top: 1px solid #eee;padding-top: 8px;">
+    <img src="https://markdownmonster.west-wind.com/favicon.png"
+         style="height: 20px;float: left; margin-right: 10px;"/>
+    this white paper was created and published with the 
+    <a href="https://markdownmonster.west-wind.com" 
+       target="top">Markdown Monster Editor</a> 
+</div

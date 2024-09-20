@@ -6,7 +6,7 @@ DO MarkdownParser
 CLEAR
 
 *** Straight Code
-#IF .T.
+#IF .F.
 
 
 
@@ -83,33 +83,20 @@ Great it works!
 
 ### The Markdown Editor for Windows
 
+```csharp
+int x = 1;
+x++;
+Console.WriteLine(x);
+```
 
 ENDTEXT
 
 lcHtml = loParser.Parse(lcMarkdown)
+? lcHtml
+ShowWebPage(lcHtml)
 
-TEXT TO lcHtml TEXTMERGE NOSHOW
-<html>
-<head>
-	<link rel="stylesheet" href="https://weblog.west-wind.com/scripts/fontawesome/css/all.min.css" type="text/css">
-	<link href="https://weblog.west-wind.com/App_Themes/Standard/Standard.css?v=1.26" type="text/css" rel="stylesheet">
-	<style>
-	   .container { padding: 0.3em 2em; }
-	</style>
-</head>
-<body>
-<div class="container">
-<h1>Markdown Template Expansion</h1>
-<<lcHtml>>
-</container>
-</body>
-</html>
-ENDTEXT
-
-
-
-ShowHtml( lcHtml )
 RETURN
+
 #ENDIF
 
 
@@ -134,6 +121,6 @@ lcHtml = Markdown(lcMarkdown)
 ? lcHtml
 
 lcHtml = Markdown(lcMarkdown)
-showHtml(lcHtml)
+ShowHtml(lcHtml)
 
 #ENDIF

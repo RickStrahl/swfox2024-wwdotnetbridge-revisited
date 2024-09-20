@@ -95,12 +95,14 @@ loAddresses = loBridge.GetProperty(loPerson,"Addresses")
 ? loBridge.cErrorMsg
 ? loAddresses.Count
 
-loType =  loBridge.GetType(loAddresses)
-? loType.FullName
+? loBridge.GetTypeName(loAddresses)
 
+? loAddresses
 loAddress = loAddresses.Item(0)
-loAddress.City = "SomeTown Ugly Town USA"
+? loAddress
 
+? loAddress.ToString()
+loAddress.City = "SomeTown Ugly Town USA"
 
 ? FormatString("Person Object:\r\n{0} and the time is: {1:t}", loPerson, DATETIME())
 
