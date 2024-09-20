@@ -8,9 +8,9 @@
   <ItemGroup>
     <!-- <PackageReference Include="Westwind.AI" Version="*" />     -->
     <!-- <PackageReference Include="Westwind.WebView.HtmlToPdf" Version="*" /> -->
-    <!--<PackageReference Include="GoogleAuthenticator" Version="*" />-->
-    <!-- <PackageReference Include="WeCantSpell.Hunspell" Version="*" /> -->
-    <PackageReference Include="Humanizer" Version="*" />
+    <!-- <PackageReference Include="GoogleAuthenticator" Version="*" /> -->
+    <PackageReference Include="WeCantSpell.Hunspell" Version="*" />
+    <!-- <PackageReference Include="Humanizer" Version="*" /> -->
   </ItemGroup>
   
 </Project>

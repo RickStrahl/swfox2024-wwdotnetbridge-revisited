@@ -4,9 +4,11 @@
 
 *by **Rick Strahl***  
 *prepared for **Southwest Fox**, 2024*  
-*[Session Example Code](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited) on GitHub*  
-*[Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)*   
-*[wwDotnetBridge Repo](https://github.com/RickStrahl/wwDotnetBridge) on GitHub*  
+
+[Session Example Code](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited) on GitHub  
+[Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)   
+[wwDotnetBridge Repo](https://github.com/RickStrahl/wwDotnetBridge) on GitHub  
+[wwDotnetBridge Docs](https://webconnection.west-wind.com/docs/_24n1cfw3a.htm)
 </div>
 
 .NET has proliferated as the dominant Windows development environment, both for application development using a variety of different Windows-specific platforms and the high-level interface chosen by Microsoft  to expose Windows system functionality. .NET based APIs have mostly replaced COM as the high level Windows system interface that exposes Interop features besides native C++.
@@ -1385,7 +1387,7 @@ This involves creating a setup key that is maintained by the two-factor app or d
 * **Validating a One Time Passkey**  
 Once a Two-Factor auth setup has been configured, you then need to validate it. To validate you ask the Authenticator app for a new two-factor one time code and you validate it in combination with your unique application level secret identifier. Based on the two-factor one time code and and the identifier the code can be validated as valid within a given time frame.
 
-Here's what this looks like:
+Here's what the sample looks like:
 
 ![Two Factor Qr Code](TwoFactorQrCode.png)
 
@@ -1875,6 +1877,56 @@ ENDFOR
 ```
 
 From here you can build an interactive solution to integrate spellchecking into your own applications.
+
+#### A Library with Dependency Issues
+It turns out this library is distributes as a .NET Standard library which means that it's not specifically targeted at .NET Framework (ie. 4.72 or later) but rather uses a more generic target. It also takes advantage of some newer .NET features that are not part of the core framework and require additional dependencies.
+
+![Spellcheck Libraries](Spellcheck-Libraries.png)
+
+As you can see there are several extra libraries that have to be distributed. That's easy enough, however it turns out that other applications also have dependencies on these same libraries and require slightly different versions.
+
+When this happens it's necessary to set up the appropriate assembly redirects that roll up to the latest version of each library. To do this you have to edit the following files:
+
+* Yourapp.exe.config
+* vfp9.exe.config  (in the VFP9 install folder)
+
+
+```xml
+<?xml version="1.0"?>
+<configuration>
+  <startup>   
+	<supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.8" />	
+  </startup>
+  <runtime>
+    <loadFromRemoteSources enabled="true"/>
+      
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+            <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-13.0.0.0" newVersion="13.0.0.0" />
+            </dependentAssembly>
+            <dependentAssembly>
+            <assemblyIdentity name="System.Runtime.CompilerServices.Unsafe" publicKeyToken="b03f5f7f11d50a3a" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-6.0.0.0" newVersion="6.0.0.0" />
+            </dependentAssembly>
+            <dependentAssembly>
+            <assemblyIdentity name="System.Memory" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-4.1.0.0" newVersion="4.0.1.2" />
+            </dependentAssembly>
+            <dependentAssembly>
+            <assemblyIdentity name="System.Buffers" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-4.1.0.0" newVersion="4.0.3.0" />
+       </dependentAssembly>
+     </assemblyBinding>     
+     
+  </runtime>
+  
+</configuration>  
+```
+
+> It's important to note that the versions in the assembly bindings are **Assembly Versions** *not File Versions*. You can find assembly versions in tools like ILSpy by looking at each assembly and looking at the metadata for the assembly.
+>
+> ![IL Spy Version Number](ILSpyVersionNumber.png)
 
 ### Humanize numbers, dates, measurements
 
