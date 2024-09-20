@@ -1559,24 +1559,807 @@ So then I can use my matching user account that matches the secret key, and now 
 
 ![Two Factor Validating In Desktop](Two-Factor-Validating-In-Desktop.png)
 
-I can paste the value and the authenticator checks for validity.
+I can paste the value and the Authenticator checks for validity.
 
 #### Two-Factoring: Logic is up to you
 The code I've shown provides the logistics, but how you implement is up to you. You can use Two-Factor auth in Web apps where it's quite common, but as you've seen here it's also possible to do this in Desktop applications as long as you can display a QR code - or you can optionally just use the Manual Setup code.
 
 ### Add Spellchecking to your applications
 
+<small><i>
+
+**Demonstrates:**
+
+* Using a third party library
+* Dealing with Assembly Version Mismatches
+* Using a static Factory method
+* Using instance methods
+* Creating a wrapper class
+* Using a Generic List 
+* Wrapping a .NET Collection with FoxPro Collection
+* Checking text spelling and generating spelling suggestsions
+* NuGet Library used: [WeCantSpell.HUnspell]https://github.com/aarondandy/WeCantSpell.Hunspell
+
+</i></small>
+
+Spellchecking is a useful feature if you're dealing with text applications and you can easily integrate a library that can check for misspelled words and suggests correctly spelled words on a misspelling.
+  
+Again, I'm not going to provide an integrated solution here, but just the tools to access this functionality. For a complete solution you likely need additional text parsing of larger blocks of text that looks at each word and then somehow highlights each misspelled word and displays a dropdown of suggestions.
+
+Here's an implementation in [Westwind Html Help Builder](https://helpbuilder.west-wind.com/) (a FoxPro application using an HTML based Markdown editor interface):
+
+![SpellCheck Highlight and Suggest](SpellCheck-HighlightAndSuggest.png)
+
+The editor parses each paragraph for individual words and then feeds each words into the spell checker in FoxPro. If a word is not spelled correctly the editor highlights the word, and on right click requests a list of suggestions that are then displayed in the drop down. 
+
+#### Spell Checking with WeCantSpell.Hunspell
+The interface to this library is pretty straight forward:
+
+* A static factory method initializes a 'word list'
+* The word list is used to check spelling
+* The word list is used to provide a list of suggestions
+
+A good way to start is to look at LinqPad to see what the .NET code looks like which is often cleaner and helps with figuring out what the exact types are:
+
+![Spellcheck LinqPad](Spellcheck-LinqPad.png)
+
+One thing that jumps out here is that the list of suggestions is returned as a `IList<string>` result. This is a **generic list** result which is significant in that generic types are not directly supported in COM or FoxPro and can't be passed back into FoxPro. So we know that the call to the `Suggest()` method will have to be an indirect call via `loBridge.InvokeMethod()`.
+
+Let's look at the mapped FoxPro code:
+
+```foxpro
+loBridge = GetwwDotnetBridge()
+
+loBridge.LoadAssembly("WeCantSpell.Hunspell.dll")
+
+*** Location of Dictionary Files *.dic and *.aff
+dictFolder = FULLPATH("bin\")
+
+*** Creates a Spellchecker instance by loading dictionary and grammar files
+loSpell = loBridge.InvokeStaticMethod("WeCantSpell.Hunspell.WordList",;
+                                    "CreateFromFiles",;
+                                    dictFolder +"en_US.dic",;
+                                    dictFolder + "en_US.aff")
+
+? "*** Check 'Colour' (en_US)"
+? loSpell.Check("Colour")   && false
+?
+? "*** Check 'Color' (en_US)"
+? loSpell.Check("Color")   && true
+?
+
+? "*** Suggestions for misspelled 'Colour'"
+loSuggestions = loBridge.InvokeMethod(loSpell,"Suggest","Colour")
+
+*** loSuggestions is a  `ComArray` Instance (IList<string>)
+? loSuggestions.Count
+
+*** Iterate over array items
+FOR lnX = 0 TO loSuggestions.Count -1
+   ? loSuggestions.Item(lnX)
+ENDFOR
+```
+
+And that works just fine. We can call `.Check()` directly because it's a very simple method with simple parameters. The `.Suggest()` method returns a list and in order to access collection values and especially generic list values, we need to use `InvokeMethod()` to execute the code from within .NET. The result is returned as a `ComArray` instance, and we can use the `.Count` and `.Item()` method to retrieve the individual values.
+
+#### Wrapper Class Makes it easier
+Although the above code is easy enough to use, it's really a good idea to abstract this functionality into a class. You don't want to have to remember how to make the two `InvokeMethod()` calls and then deal with the `ComArray` instance. Instead we could create a class that automatically initializes the wordlist and then stores it internally. We can implement a `.Spell()` method that simply passes through, but for the `.Suggest()` method we can perhaps turn the `ComArray` into a native FoxPro Collection.
+
+Here's what that looks like:
+
+
+```foxpro
+*************************************************************
+DEFINE CLASS HunspellChecker AS Custom
+*************************************************************
+
+oBridge = null
+oSpell = null
+cLanguage = "en_US"
+cDictionaryFolder = "" && root
+
+************************************************************************
+FUNCTION init(lcLang, lcDictFolder)
+****************************************
+IF EMPTY(lcLang)
+   lcLang = this.cLanguage
+ENDIF
+IF EMPTY(lcDictFolder)
+   lcDictFolder = this.cDictionaryFolder
+ENDIF
+   
+this.oBridge = GetwwDotnetBridge()
+IF ISNULL(this.oBridge)
+      ERROR "Failed to load HUnspell: " + this.oBridge.cErrorMsg
+ENDIF
+
+LOCAL loBridge as wwDotNetBridge
+loBridge = GetwwDotnetBridge()
+if(!loBridge.LoadAssembly("WeCantSpell.Hunspell.dll"))
+  ERROR "Failed to load WeCantSpell.Hunspell.dll: " + this.oBridge.cErrorMsg
+ENDIF
+
+IF !EMPTY(lcDictFolder)
+	lcDictFolder = ADDBS(lcDictFolder)
+ELSE
+    lcDictFolder = ""
+ENDIF
+
+THIS.oSpell = loBridge.InvokeStaticMethod("WeCantSpell.Hunspell.WordList",;
+                                    "CreateFromFiles",;
+                                  lcDictFolder + lcLang + ".dic",;
+                                  lcDictFolder + lcLang + ".aff")
+
+IF ISNULL(this.oSpell)
+  ERROR "Failed to load HUnspell: " + this.oBridge.cErrorMsg
+ENDIF
+
+ENDFUNC
+*   init
+
+************************************************************************
+FUNCTION Spell(lcWord)
+****************************************
+LOCAL llResult
+
+IF ISNULLOREMPTY(lcWord) OR LEN(lcWord) = 1
+   RETURN .T.
+ENDIF
+
+llResult = this.oSpell.Check(lcWord)
+
+RETURN llResult
+ENDFUNC
+*   Spell
+
+************************************************************************
+FUNCTION Suggest(lcWord)
+****************************************
+LOCAL loWords, lnX
+
+loCol = CREATEOBJECT("collection")
+
+*** Returns a Collection of values (not an array)
+loWords = this.oBridge.InvokeMethod(this.oSpell,"Suggest",lcWord)
+
+lnCount = loWords.Count
+
+FOR lnX = 0 TO lnCount -1
+    *** return indexed value (0 based) from the list collection
+    lcWord = loWords.Item(lnX)
+    loCol.Add( lcWord )
+ENDFOR
+
+
+RETURN loCol
+ENDFUNC
+*   Suggest
+
+************************************************************************
+FUNCTION Destroy()
+****************************************
+
+*** MUST dispose to release memory for spell checker
+*this.oSpell.Dispose()
+this.oSpell = null
+
+ENDFUNC
+*   Destroy
+
+ENDDEFINE
+```
+
+This makes it much easier to create an instances of the class and keep it around for the duration of the application. You'll want to minimize loading this class as loading the dictionary from disk initially can be on the slow side (takes a second or two).
+
+Beyond that the `Suggest()` method returns a cleaner FoxPro collection that you can `FOR EACH` over and use with more familiar 1 based array logic.
+
+Using this class the previous code gets a little simpler yet:
+
+```foxpro
+*** Using the Wrapper Class
+CLEAR
+
+*** Loads library and dictionary - you can cache this for reuse
+loSpell = CREATEOBJECT("HunspellChecker","en_US",".\bin")   
+
+
+? "*** Check spelling for:"
+? "Testing: " + TRANSFORM( loSpell.Spell("Testing")  )
+
+? "Tesdting: " + TRANSFORM(loSpell.Spell("Tesdting")      )
+
+
+lcWord = "aren'tt"
+? "Suggestions for " + lcWord
+loSug = loSpell.Suggest(lcWord)
+? loSug.Count
+FOR EACH lcWord in loSug
+  ? lcWord
+ENDFOR
+loSpell = null
+
+loSpell = CREATEOBJECT("HunspellChecker","de_DE",".\bin")
+
+? "*** Using German Dictionary:"
+? "Zahn: " + TRANSFORM(loSpell.Spell("Zahn"))
+? "Zahnn: " + TRANSFORM(loSpell.Spell("Zahnn"))     
+? "Zähne: " + TRANSFORM(loSpell.Spell("Zähne"))  
+? "läuft: " + TRANSFORM(loSpell.Spell("läuft"))
+
+? "***  Suggest for Zähjne"
+loSug = loSpell.Suggest("Zähjne")
+FOR EACH lcWord in loSug
+  ? lcWord
+ENDFOR
+     
+? loSug.Count
+loSpell = null
+
+
+? "*** Text to check:"
+TEXT TO lcText
+These ae somme of the worsd that are badly mispeled.
+
+I cannot imaggine that somebody can spel so bad.
+
+ENDTEXT
+```
+
+Note that you can spell check for different languages by applying the appropriate dictionary files. HUnspell uses standard dictionary files that are also used by OpenOffice and you can download other languages from there.
+
+Finally, here's a rudimentary implementation that lets you get all misspelled words in a paragraph or other lengthy block of text and then also return the suggestions for the misspelled words:
+
+```foxpro
+loSpell = CREATEOBJECT("HunspellChecker","en_US",".\bin")   
+loWords = GetWords(lcText)
+
+LOCAL lnX
+? "*** Mispelled words:"
+FOR lnX = 1 TO loWords.Count   
+   lcWord = loWords.Item(lnX)
+   lcSuggest = ""
+
+   IF (!loSpell.Spell(lcWord))
+      loSug = loSpell.Suggest(lcWord)
+      IF (loSug.Count > 0)
+      	  
+          FOR lnY = 1 TO loSug.Count
+			lcSuggest = lcSuggest + loSug.Item(lnY) + " "
+	   	  ENDFOR
+	  ENDIF
+	  
+	  ? lcWord + " - " + lcSuggest   
+	ENDIF
+	
+ENDFOR
+```
+
+From here you can build an interactive solution to integrate spellchecking into your own applications.
 
 ### Humanize numbers, dates, measurements
 
+<small><i>
 
-### File Watcher and Live Reload (Event Handling)
+**Demonstrates:**
+
+* Using a third party library
+* Creating a Wrapper Class in .NET to avoid type complexity
+* Create a Wrapper class in FoxPro for ease of use
+* Work with Extensions Methods in .NET
+* Nuget Library: [Humanizer](https://github.com/Humanizr/Humanizer)
+
+</i></small>
+
+In this example, we'll see an example of creating a custom .NET DLL of our own and calling it from FoxPro. Humanizer is a cool library for text formatting that - as the name suggests - provides friendly naming for many common types. For example, things like using *Today* or *10 days ago* for dates, turning numbers into strings, pluralizing text, camel or snake casing un-casing of text, turning bytes into friendly descriptions and so on.
+
+What's different with this example and why I prefer to delegate access of features to a .NET wrapper class is that Humanizer implements most of its functionality as extension methods and it uses a lot of nullable types. It's possible to access these features through wwDotnetBridge, but it's just significantly easier to do from within .NET and it's possible to create a very simple .NET class that exposes the features we want directly to FoxPro without the need of a FoxPro wrapper class.
+
+To demonstrate some of the features of Humanizer and the functions I've exposed here's an example of the FoxPro code that uses the .NET wrapper component first:
+
+```foxpro
+loBridge = GetwwDotnetBridge()
+loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
+
+*!*	? "*** Raw Date to String"
+*!*	*  public static string Humanize(this DateTime input, bool? utcDate = null, DateTime? dateToCompareAgainst = null, CultureInfo culture = null)      
+*!*	ldDate = DATE() + 22
+*!*	? loBridge.InvokeStaticMethod("Humanizer.DateHumanizeExtensions","Humanize",ldDate,null,null,null)  
+?
+
+*!*	? "*** Raw Number to String"
+*!*	lnValue = 121233
+*!*	* public static string ToWords(this int number, CultureInfo culture = null)       
+*!*	? loBridge.InvokeStaticMethod("Humanizer.NumberToWordsExtension","ToWords",lnValue, null) + ;
+*!*	"  (" + TRANSFORM(lnValue,"9,999,999") + ")"
+*!*	?
+
+*** Using a .NET Wrapper Class
+
+LOCAL loHuman as wwDotnetBridge.FoxHumanizer
+loHuman = loBridge.CreateInstance("wwDotnetBridgeDemos.FoxHumanizer")
+
+? "*** Human Friendly Dates"
+? loHuman.HumanizeDate(DATE()-1)            && yesterday
+? loHuman.HumanizeDate(DATETime() + 86500)  && tomorrow
+? loHuman.HumanizeDate(DATE() + 2)          && 2 days from now
+? loHuman.HumanizeDate(DATETIME() - 55)     && 55 seconds ago
+? loHuman.HumanizeDate(DATETIME() - 3800)   && an hour ago
+?
+
+? "*** Number to Words"
+? loHuman.NumberToWords(10)        && ten 
+? loHuman.NumberToWords(1394)      && one thousand three hundred ninety four
+?
+? "*** Pluralize"
+? loHuman.Pluralize("Building")    && Buildings
+? loHUman.Pluralize("Mouse")       && Mice
+?
+
+? "*** Numbers and Pluraize together"
+? loHuman.ToQuantity("Car",3)       && three cars
+? loHuman.ToQuantity("Mouse",3)     && three mice
+?
+
+? "*** Bytes, kb, megabytes etc. from bytes"
+? loHuman.ToByteSize(13122)         && 12.81 KB
+? loHuman.ToByteSize(1221221)       && 1.16 MB           
+? loHuman.ToByteSize(1221221312)    && 1.14 GB
+```
+
+Humanizer has a ton of features and I've just exposed a few of them in the .NET class. Here's the C# class code:
+
+```csharp
+/// <summary>
+ /// Helper to create humanized words of numbers dates and other occasions
+ /// 
+ /// Wrapper around hte Humanizer library:
+ /// https://github.com/Humanizr/Humanizer
+ /// </summary>
+ public class FoxHumanizer
+ {
+
+     /// <summary>
+     /// Humanizes a date as yesterday, two days ago, a year ago, next month etc.
+     /// </summary>
+     public string HumanizeDate(DateTime date)
+     {            
+         return date.Humanize(utcDate: false);
+     }
+
+     /// <summary>
+     /// Turns integer numbers to words
+     /// </summary>
+     public string NumberToWords(int number)
+     {            
+         return number.ToWords();
+     }
+
+     /// <summary>
+     /// Returns a number like 1st, 2nd, 3rd
+     /// </summary>
+     public string NumberToOrdinal(int number)
+     {
+         return number.Ordinalize();
+     }
+
+     public string NumberToOrdinalWords(int number)
+     {
+         return number.ToOrdinalWords();
+     }
+
+     /// <summary>
+     /// creates expression like one car or two bananas
+     /// from a qty and a string that is pluralized as needed
+     /// </summary>
+     public string ToQuantity(string single, int qty)
+     {
+         return single.ToQuantity(qty, ShowQuantityAs.Words);
+     }
+
+
+     public string ToCamelCase(string input)
+     {
+         return input.Camelize();
+     }
+
+     /// <summary>
+     /// Truncates a string and adds elipses after length is exceeded
+     /// </summary>
+     public string TruncateString(string input, int length)
+     {
+         return input.Truncate(length);
+     }
+
+     /// <summary>
+     /// Takes a singular noun and pluralizes it
+     /// </summary>
+     public string Pluralize(string single)
+     {
+         return single.Pluralize(true);
+     }
+
+     /// <summary>
+     /// Takes a pluralized noun and turns it to singular
+     /// </summary>
+     public string Singularize(string pluralized)
+     {
+         return pluralized.Singularize(true);
+     }
+
+     /// <summary>
+     /// Returns a byte count as kilobytes, Mb or Gb
+     /// </summary>
+     public string ToByteSize(int byteSize)
+     {
+         return byteSize.Bytes().Humanize("#.##"); 
+     }
+     
+ }
+```
+
+Humanizer has a ton of features, so I picked specific features that I am interested in to expose in the FoxPro class. If there are other use cases that I have not figured out here I can add them separately.
+
+If I want to update the code I can simply update the code and rebuild the `wwDotnetBridgeDemos.csproj` project which lives in its own folder in `.\Dotnet\wwDotnetBridgeDemos`. 
+
+To update the code and assuming I have the .NET SDK installed on my machine I can simply run the following from a terminal in that folder:
+
+```cs
+dotnet build wwDotnetBridgedemos.csproj
+```
+
+The project is set up to automatically build into the `.\bin` folder but make sure you've shut down FoxPro if the library was previously loaded.
+
+#### Why use a .NET Class?
+So why did I use a .NET class if it's possible to call the code from FoxPro? In some cases it's simply easier to use .NET code to call functionality in .NET. Humanizer in particular uses a couple of features that are a little tricky to access from FoxPro.
+
+Consider this LinqPad code:
+
+![Humanizer LinqPad](Humanizer-LinqPad.png)
+
+Most of Humanizer's methods are heavily overloaded extension methods that use nullable types all of which are not super easy to call from FoxPro using wwDotnetBridge. It's possible, but it's super time consuming to find the right overload to call and then set up the ComValue structure correctly to support the nullable values.
+
+It's simply easier and also considerably more efficient to use a .NET wrapper directly for these calls especially since our own classes can be designed to be explicitly FoxPro friendly so they can be directly invoked without any of the wwDotnetBridge proxy helper methods.
+
+### A File System Watcher and Live Reload (Event Handling)
 
 
 ### Async: Use OpenAI for common AI Operations
+<small><i>
 
+**Demonstrates:**
+
+* Using built-in .NET functionality
+* Handling events via a Callback class
+* Useful for document change notifications
+* Useful for a Live Reload Manager
+* Uses `System.Net.Filewatcher`
+
+</i></small>
+
+The .NET Filewatcher is a very useful built-in component that allows you to monitor changes in the file system. You can enable the file watcher to notify you when files change, are added, deleted or renamed. There are many uses for this functionality especially in document centric applications.   
+  
+I use this functionality in Markdown Monster for example to detect when a document I'm editing has changed. If my document has no changes I can automatically update the document with the new changes from disk for example, or if I do have changes I can pop up a notice that somebody else has changed the file and then provide an option to take mine, take theirs or run a comparison tool to compare and merge changes.
+
+![Document File Change Detection](https://github.com/RickStrahl/ImageDrop/blob/master/MarkdownMonster/FileChangeDetection.gif?raw=true)
+
+Another use case for this is in Web Connection for the Live Reloading the server if FoxPro code has changed. I can basically monitor for any code changes to PRG files, and if one has been change I can automatically restart the Web server application and run with the new change and at the same time trigger a page refresh in the browser to reload the page. Meanwhile the Web Connection Web connector monitors for changes to Web files and automatically refreshes Web pages when HTML, CSS or JS files change.
+
+It's a powerful feature that comes in handy for many situations.
+
+One tricky part about the .NET FileWatcher component is that it is event driven. In this example we'll look at how to set up an event handler that is a Callback class that gets called when a file is changed added or deleted. We'll do this all from FoxPro this time.
+
+Let's start with the setup code that starts of file monitoring:
+
+```foxpro
+loBridge = GetwwDotnetBridge()
+
+IF EMPTY(lcFileList)
+   lcFileList = "*.prg,*.ini,*.fpw,*.bak,"
+ENDIF
+IF EMPTY(lcFolder)
+   lcFolder = SYS(5) + CurDir()
+ENDIF
+
+*** Create an instance of the file watcher: MUST PERSIST!!!
+PUBLIC __WWC_FILEWATCHER
+__WWC_FILEWATCHER = loBridge.CreateInstance("System.IO.FileSystemWatcher",lcFolder)
+__WWC_FILEWATCHER.EnableRaisingEvents = .T.
+__WWC_FILEWATCHER.IncludeSubDirectories = .T.
+
+*** Create the Handler Object that responds to events
+loEventHandler = CREATEOBJECT("FileWatcherEventHandler")
+loEventHandler.cFileList = lcFileList
+
+*** Create a subscription to the events
+loSubscription = loBridge.SubscribeToEvents(__WWC_FILEWATCHER, loEventHandler)
+loEventHandler.oSubscription = loSubscription  && so we can unsubscribe
+
+? "Watching for file changes in: " + lcFolder + " for  " + lcFileList
+```
+
+The code creates a new `FileSystemWatcher` instance and enables listening to events. We specify a folder to monitor recursively and allow raising of events. The watcher exposes a number of events and we need to implement all events of the interface even if we are only interested in a few or even one event. This is similar to the way COM events are handled via FoxPro `INTERFACE`.
+
+Next we create an Event Subscriptiong by calling `SubscribeToEvents()` to which we pass the object that we want to handle events on and an event handler object - that's the object that implements the methods matching the event signatures in .NET.
+
+The events are fired **asynchronously**, meaning the event handler methods are fired out of band and the code immediately following the `SubscribeToEvents()` immediately returns and keeps on running. The events fire in the background, out of band.
+
+The event handler class is then called when something interesting happens - in this case when files are changed in some way. For this example, I'm simply writing the operation and filename to the desktop, but you can do anything you want from within the event code. 
+
+You do however, want to **minimize the code you run in the event handler** and have it touch as little shared data as possible. It's best to consider event handlers as data drops where you dump some data that can be picked up by the main application at a later time. This can be as simple as setting one or more variables that are later read, or writing a record to a database table that is later read.
+
+Here's the EventHandler class:
+
+```foxpro
+*************************************************************
+DEFINE CLASS FileWatcherEventHandler AS Custom
+*************************************************************
+
+*** File extensions to monitor
+cFileList = "*.prg,*.vcx,*.exe,*.app,*.ini"
+
+*** Optional comma list of folders to exclude (ie: \temp\,\web\)
+cFolderExclusions = ""
+
+*** File watcher subscription
+oSubscription = null
+
+nLastAccess = 0
+
+************************************************************************
+FUNCTION HasFileChanged(lcFilename as String)
+****************************************
+LOCAL lcFileList, lnX, lnFiles, lcExtension, lnExclusions
+LOCAL ARRAY laExtensions[1]
+LOCAL ARRAY laExclusions[1]
+
+IF EMPTY(lcFileName)
+   RETURN .F.
+ENDIf
+
+
+IF ATC("\temp\",lcFileName) > 0
+   RETURN .F.
+ENDIF
+
+lnExclusions = 0
+IF !EMPTY(THIS.cFolderExclusions)
+	lnExclusions = ALINES(laExclusions,this.cFolderExclusions,1 + 4, ",")
+	FOR lnX = 1 TO lnExclusions
+	    IF ATC(LOWER(laExclusions[lnX]),lcFileName) > 0
+	       RETURN .F.
+	    ENDIF
+	ENDFOR
+ENDIF
+
+lcFileList = STRTRAN(THIS.cFileList,"*.","")
+lnFiles =  ALINES(laExtensions,lcFileList,1 + 4,",")
+        
+FOR lnX = 1 TO lnFiles
+    lcExtension = LOWER(JUSTEXT(lcFileName))
+    IF lcExtension == LOWER(laExtensions[lnX])
+       this.nLastAccess = SECONDS()
+       RETURN .T.
+    ENDIF
+ENDFOR
+
+RETURN .F.
+ENDFUNC
+*   HasFileChanged
+
+
+************************************************************************
+FUNCTION OnCreated(sender,ev)
+****************************************
+LOCAL lcFile 
+
+lcFile = THIS.GetFilename(ev)
+IF THIS.HasFileChanged(lcFile)
+   ? "File has been created: " +lcFile
+ENDIF
+	
+ENDFUNC
+
+FUNCTION OnChanged(sender,ev)
+LOCAL lcFile 
+
+lcFile = THIS.GetFilename(ev)
+
+IF THIS.HasFileChanged(lcFile)
+	? "File has been changed: " + lcFile
+ENDIF
+
+ENDFUNC
+
+************************************************************************
+FUNCTION OnDeleted(sender, ev)
+******************************
+LOCAL lcFile 
+
+lcFile = THIS.GetFilename(ev)
+IF THIS.HasFileChanged(lcFile)
+	? "File has been deleted: " + lcFile
+ENDIF
+
+ENDFUNC
+
+************************************************************************
+FUNCTION OnRenamed(sender, ev)
+******************************
+LOCAL lcFile 
+
+IF VARTYPE(ev) # "O"
+   RETURN
+ENDIF
+
+*** RenamedEventArgs apparently doesn't allow direct access
+loBridge = GetwwDotnetBridge()
+lcOldFile = loBridge.GetProperty(ev,"OldFullPath")
+IF EMPTY(lcOldFile)
+   RETURN
+ENDIF
+lcNewFile = loBridge.GetProperty(ev,"FullPath")
+IF EMPTY(lcNewFile)
+   RETURN
+ENDIF
+
+? "File has been renamed: " + lcOldFile + " to " + lcNewFile
+
+ENDFUNC
+
+************************************************************************
+FUNCTION Destroy()
+******************
+
+IF THIS.oSubscription != null
+	THIS.oSubscription.UnSubscribe()
+	THIS.oSubscription = null
+ENDIF
+   
+IF VARTYPE(__WWC_FILEWATCHER) = "O"
+   __WWC_FILEWATCHER.Dispose()
+   __WWC_FILEWATCHER = .F.
+ENDIF
+
+ENDFUNC
+
+ENDDEFINE
+```
+
+The file watcher has no file matching filters that can be applied to the events which means that you have to filter for files that you want to watch as part of the event handlers you implement. If you're only interested in PRG files you need to check what files are incoming and immediately exit if it's not what you want. 
+
+Another tricky part about the file watcher is knowing exactly what the event interface looks like which [in this case can be found here](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher.changed?view=net-8.0).
+
+As mentioned all events have to be implemented but you can certainly provide null events that don't do anything. If you don't care about renaming, just immediately return in the `OnRenamed` event.
+
+When you run this demo you might also notice that some events like the change events fire multiple times. That's because there are filters that you can set on what can be monitored and many file operation might trigger for multiple matches to these triggers. It might be file data change and data change. Making the file watcher behave often involves ignoring repeated events and playing around with the event filters.
+
+Regardless of the minor issues, a Filewatcher is a powerful tool that's useful for a ton of features.
 
 ### Async: Print Html to Pdf 
+<small><i>
+
+**Demonstrates:**
+
+* Calling async Task methods 
+* Using Callback handlers to handle async completions
+* Find out how to turn HTML to PDF
+* NuGet Library: [Westwind.WebView.HtmlToPdf](https://github.com/RickStrahl/Westwind.WebView.HtmlToPdf)
+
+</i></small>
+
+This is a small example that demonstrates how to print HTML documents to PDF files. This is useful for Web and desktop applications that can output reports and documents to HTML and turn that HTML into PDF files that can be emailed or published.
+
+This and the following example require the use of `async Task` code in .NET as the task of printing to PDF can take a bit of time. So rather than waiting for completion the operation is `async` and calls you back when the task is complete. 
+
+wwDotnetBridge includes a `InvokeTaskMethodAsync()` which allows passing a Callback handler object that is notified the async operation completes either via a `OnComplete()` or `OnError()` handler.
+
+Let's take a look. Let's start with the mainline setup code that starts the Html to Pdf operation.
+
+```foxpro
+LPARAMETER lcUrl, lcOutputFile
+
+*** Has to be persist after program ends 
+PUBLIC loCallbacks
+
+IF EMPTY(lcUrl)
+   lcUrl = "Assets/HtmlSampleFile-SelfContained.html"
+ENDIF
+IF EMPTY(lcOutputFile)
+   lcOutputFile = "c:\temp\htmltopdf.pdf"
+ENDIF   
+IF !StartsWith(lcUrl, "http")  
+   *** Assume it's a path - fix it up
+   lcUrl = GetFullPath(lcUrl)
+ENDIF
+
+CLEAR 
+? "*** Generating PDF from " + lcUrl
+? "*** To " + lcOutputFile
+
+LOCAL loBridge as wwDotNetBridge
+loBridge = GetwwDotnetBridge()
+loBridge.LoadAssembly("Westwind.WebView.HtmlToPdf.dll")
+
+*** Create the .NET class
+loPdf = loBridge.CreateInstance("Westwind.WebView.HtmlToPdf.HtmlToPdfHost")
+
+*** Create the Callback Handler Object
+loCallbacks = CREATEOBJECT("PdfCallbacks")
+loCallbacks.cOutputFile = lcOutputFile
+ERASE (lcOutputFile)
+
+loSettings = null
+loSettings = loBridge.CreateInstance("Westwind.WebView.HtmlToPdf.WebViewPrintSettings")
+
+*** Async PDF Generation Method: Exits immediately
+loBridge.InvokeTaskmethodAsync(loCallbacks, loPdf,
+                               "PrintToPdfAsync", lcUrl, 
+                               lcOutputFile, loSettings)
+
+? "*** Converting to PDF - this may take a few seconds..."
+GoUrl(lcUrl)   && Display PDF
+```
+
+The base behavior for this class is very simple - you call a single method to perform the Html to PDF conversion. You basically provide a Url or Filename to an HTML document, and an optional output filename and the engine will create a PDF document.
+
+The call `PrintToPdfAsync()` is async so it returns immediately. You pass in a Callback handler object that is called back when the print operation completes - or fails. You also pass the Url, output file and a settings object which allows customizing a few things about the PDF output generation.
+
+Here's what the Callback object looks like:
+
+```foxpro
+DEFINE CLASS PdfCallbacks as AsyncCallbackEvents
+
+*** Capture output file 
+cOutputFile = ""
+
+FUNCTION OnCompleted(lvResult,lcMethod)
+
+IF !lvResult.IsSuccess
+   ? "ERROR: " + lvResult.Message
+   RETURN
+ENDIF
+
+GoUrl(THIS.cOutputFile)
+? "*** PDF Output Generated!"
+
+ENDFUNC
+
+FUNCTION OnError(lcMessage, loException, lcMethod)
+
+? "Error: " + lcMethod,lcMessage
+
+ENDFUNC
+
+ENDDEFINE
+```
+
+You inherit from AsyncCallbackEvents and implement two methods:
+
+* OnCompleted(lvResult, lcMethod)
+* OnError(lcMessage, loException, lcMethod)
+
+One of these two will always be called. On success we simply go and display the PDF file in the browser via `GoUrl(this.cOutputFile)`. Note that the class adds a custom `cOutputFile` property that is set when the class is instantiated. Use the property interface to pass values that you need from the mainline into the callback class.
+
+As with the Event code in the previous example, keep event handler methods very short running and have minimal impact on the application state. Ideally capture what you need store it somewhere and then process it from the mainline code.
+
+Here's what the output from the parameterless sample looks like from a local self-contained long HTML document printed to PDF:
+
+![Print To Pdf Output](PrintToPdfOutput.png)
+
+The demo displays both the original HTML and converted PDF document. Here's another example by running to a specific Url:
+
+```foxpro
+DO PrintToPdf with "https://microsoft.com"
+```
+
+Here's what the Microsoft Site output looks like (they do a pretty good job with their Print stylesheet):
+
+![Print To Pdf Output Microsoft Com](PrintToPdfOutputMicrosoftCom.png)
+
+Note that the print results may very in quality, depending how well the URL/HTML support print output via a print specific stylesheet. The library adds some basic print styling but PDF rendering may not do a great job on really complex, and non-semantic HTML documents. It does however very well with very document centric output like documentation or output from - Markdown documents.
+
+### Async: OpenAI Calls
+
 
 
 ### Create a .NET Component and call it from FoxPro

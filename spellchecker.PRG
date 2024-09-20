@@ -3,9 +3,9 @@ DO _startup.prg
 
 DO wwDotnetBridge
 SET PROCEDURE TO wwUtils additive
-SET PROCEDURE TO HunspellChecker ADDITIVE
+SET PROCEDURE TO SpellChecker ADDITIVE
 
-#IF .T.
+#IF .F.
 *** RAW API Access
 
 
@@ -47,18 +47,15 @@ FOR lnX = 0 TO loSuggestions.Count -1
    ? loSuggestions.Item(lnX)
 ENDFOR
 
-
-
-
-
-
 RETURN
 #ENDIF
 
 #IF .T.
-   clear
-   loSpell = CREATEOBJECT("HunspellChecker","en_US",".\bin")   
+   *** Using the Wrapper Class
+   CLEAR
    
+   *** Loads library and dictionary - you can cache this for reuse
+   loSpell = CREATEOBJECT("HunspellChecker","en_US",".\bin")   
    
    ? "*** Check spelling for:"
    ? "Testing: " + TRANSFORM( loSpell.Spell("Testing")  )
@@ -194,31 +191,20 @@ ENDIF
 
 IF !EMPTY(lcDictFolder)
 	lcDictFolder = ADDBS(lcDictFolder)
-ELSE
+ELSE
     lcDictFolder = ""
 ENDIF
 
+lcDictFolder = FULLPATH(lcDictFolder)
+
 THIS.oSpell = loBridge.InvokeStaticMethod("WeCantSpell.Hunspell.WordList",;
-								  "CreateFromFiles",;
-                                  lcDictFolder + lcLang + ".aff",;
-                                  lcDictFolder + lcLang + ".dic")
+                                    "CreateFromFiles",;
+                                  lcDictFolder + lcLang + ".dic",;
+                                  lcDictFolder + lcLang + ".aff")
 
 IF ISNULL(this.oSpell)
   ERROR "Failed to load HUnspell: " + this.oBridge.cErrorMsg
 ENDIF
-
-                                  
-*!*	IF FILE(lcDictFolder + lcLang + "_custom.txt")
-*!*	  lcFile = FILETOSTR(lcDictFolder + lcLang + "_custom.txt")
-*!*	  lcFile = STRTRAN(lcFile,CHR(13) + CHR(10),CHR(10))
-*!*	  lcFile = STRTRAN(lcFile,CHR(13),CHR(10))
-*!*	  LOCAL ARRAY laLines[1]
-*!*	  LOCAL lnX, lnLine
-*!*	  lnLines = ALINES(laLines,lcFile,1 + 4,CHR(10))
-*!*	  FOR lnX = 1 TO lnLines
-*!*	      this.oSpell.Add(laLines[lnx])            
-*!*	  ENDFOR
-*!*	ENDIF
                                   
 
 ENDFUNC
@@ -238,6 +224,7 @@ LOCAL llResult
 IF ISNULLOREMPTY(lcWord) OR LEN(lcWord) = 1
    RETURN .T.
 ENDIF
+
 
 llResult = this.oSpell.Check(lcWord)
 

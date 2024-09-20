@@ -24,10 +24,11 @@ CLEAR
 LOCAL loBridge as wwDotNetBridge
 loBridge = GetwwDotnetBridge()
 
+*** Load library and create the .NET Class
 loBridge.LoadAssembly("Westwind.WebView.HtmlToPdf.dll")
-
 loPdf = loBridge.CreateInstance("Westwind.WebView.HtmlToPdf.HtmlToPdfHost")
 
+*** Create the Callback Handler Object
 loCallbacks = CREATEOBJECT("PdfCallbacks")
 loCallbacks.cOutputFile = lcOutputFile
 ERASE (lcOutputFile)

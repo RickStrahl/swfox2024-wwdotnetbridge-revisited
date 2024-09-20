@@ -1666,7 +1666,7 @@ DEFINE CLASS AsyncCallbackEvents AS Custom
 Class AsyncCallbackEvents
 
 *:Description:
-Create a subclass of this class and pass to InvokeMethodAsync
+Create a subclass of this class and pass to InvokeMethodAsync OR InvokeTaskMethodAsync  
 as a callback object. When the method call completes or fails
 the OnCompleted or OnError methods are fired.
 

@@ -1,6 +1,12 @@
 LPARAMETERS lcFileList, lcFolder, lcWebFolder, lcFolderExclusions
-LOCAL loBridge as wwDotNetBridge, loEventHandler as FileWatcherEventHandler, ;
+LOCAL loBridge as wwDotnetBridge, loEventHandler as FileWatcherEventHandler, ;
       loSubscription, lcNotificationFile
+CLEAR
+
+*** Files that have changed 
+IF EMPTY(lcFileList)
+   lcFileList = "*.prg,*.ini,*.fpw,*.bak,"
+ENDIF
 
 IF EMPTY(lcFolder)
    lcFolder = SYS(5) + CurDir()
@@ -11,10 +17,8 @@ IF EMPTY(lcWebFolder)
 ENDIF
 lcWebFolder = ADDBS(lcWebFolder)
 
-
-
 *** Allow for auto-compilation
-SET DEVELOPMENT ON  
+SET DEVELOPMENT ON
 
 do wwDotNetBridge
 loBridge = GetwwDotnetBridge()
@@ -29,10 +33,6 @@ __WWC_FILEWATCHER.IncludeSubDirectories = .T.
 loEventHandler = CREATEOBJECT("FileWatcherEventHandler")
 loEventHandler.cFileList = lcFileList
 
-*** Files that have changed 
-IF EMPTY(lcFileList)
-   lcFileList = "*.prg,*.ini,*.fpw,*.bak,"
-ENDIF
 
 IF !EMPTY(lcFolderExclusions)
    loEventHandler.cFolderExclusions = lcFolderExclusions
@@ -141,13 +141,23 @@ ENDFUNC
 ************************************************************************
 FUNCTION OnRenamed(sender, ev)
 ******************************
-LOCAL lcFile 
+LOCAL lcFile, loBridge
 
-lcFile = THIS.GetFilename(ev)
-
-IF THIS.HasFileChanged(lcFile)
-	? "File has been renamed: " + lcFile
+IF VARTYPE(ev) # "O"
+   RETURN
 ENDIF
+
+loBridge = GetwwDotnetBridge()
+lcOldFile = loBridge.GetProperty(ev,"OldFullPath")
+IF EMPTY(lcOldFile)
+   RETURN
+ENDIF
+lcNewFile = loBridge.GetProperty(ev,"FullPath")
+IF EMPTY(lcNewFile)
+   RETURN
+ENDIF
+
+? "File has been renamed: " + lcOldFile + " to " + lcNewFile
 
 ENDFUNC
 

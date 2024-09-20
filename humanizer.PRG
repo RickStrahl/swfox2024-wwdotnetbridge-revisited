@@ -4,22 +4,22 @@ CLEAR
 DO _Startup.prg
 do wwDotNetBridge
 
+
 loBridge = GetwwDotnetBridge()
 loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
 
-? "*** Raw Date to String"
-*  public static string Humanize(this DateTime input, bool? utcDate = null, DateTime? dateToCompareAgainst = null, CultureInfo culture = null)      
-ldDate = DATE() + 22
-? loBridge.InvokeStaticMethod("Humanizer.DateHumanizeExtensions","Humanize",ldDate,.f., null,null)  + ;
-"  (" + TRANSFORM(ldDate) + ")"
-? 
-
-? "*** Raw Number to String"
-lnValue = 121233
-* public static string ToWords(this int number, CultureInfo culture = null)       
-? loBridge.InvokeStaticMethod("Humanizer.NumberToWordsExtension","ToWords",lnValue, null) + ;
-"  (" + TRANSFORM(lnValue,"9,999,999") + ")"
+*!*	? "*** Raw Date to String"
+*!*	*  public static string Humanize(this DateTime input, bool? utcDate = null, DateTime? dateToCompareAgainst = null, CultureInfo culture = null)      
+*!*	ldDate = DATE() + 22
+*!*	? loBridge.InvokeStaticMethod("Humanizer.DateHumanizeExtensions","Humanize",ldDate,null,null,null)  
 ?
+
+*!*	? "*** Raw Number to String"
+*!*	lnValue = 121233
+*!*	* public static string ToWords(this int number, CultureInfo culture = null)       
+*!*	? loBridge.InvokeStaticMethod("Humanizer.NumberToWordsExtension","ToWords",lnValue, null) + ;
+*!*	"  (" + TRANSFORM(lnValue,"9,999,999") + ")"
+*!*	?
 
 *** Using a .NET Wrapper Class
 
