@@ -1,11 +1,6 @@
-LPARAMETERS lcHtml, lcTitle
-
-
-ShowHtmlLocal(lcHtml, "",  lcTitle)
-
 
 ************************************************************************
-FUNCTION ShowHTMLLocal
+
 **********************
 ***  Function: Takes an HTML string and displays it in the default
 ***            browser. 
@@ -13,27 +8,28 @@ FUNCTION ShowHTMLLocal
 ***            For this reason there may be concurrency issues
 ***            unless you change the file for each use
 ***      Pass: lcHTML       -   HTML to display
-***            lcFile       -   Temporary File to use (Optional)
-***            loWebBrowser -   Web Browser control ref (Optional)
+***            lcFile       -   Output file for templated HTML (optional)
+***            lcThemePath  -   Path to the theme folder - should contain `Theme.html` (optional)
 ************************************************************************
-LPARAMETERS lcHTML, lcFile,  lcTitle
-PRIVATE pcBasePath, pcTitle, pcHtml, pcThemePath
+
+FUNCTION ShowWebPage
+LPARAMETERS lcHTML, lcFile, lcThemePath
+LOCAL lcBasePath, lcThemePath, lcT
 
 lcHTML=IIF(EMPTY(lcHTML),"",lcHTML)
 lcFile=IIF(EMPTY(lcFile),SYS(2023)+"\ww_HTMLView.htm",lcFile)
-pcBasePath = ADDBS(SYS(5) + CURDIR())
-pcThemePath = pcBasePath + "Assets\Westwind\"
-pcTitle = IIF(EMPTY(lcTitle),"",lcTitle)
+lcBasePath = ADDBS(SYS(5) + CURDIR())
+lcThemePath = IIF(EMPTY(lcThemePath), lcBasePath + "Assets\Westwind\", lcThemePath)
 lcTemplate = "./Assets/Westwind/Theme.html"
 
-IF !EMPTY(lcTemplate)
-   lcT =  FILETOSTR(lcTemplate)
-   pcHtml = lcHtml
-   lcHtml = TEXTMERGE(lcT)
-ENDIF
+*** Expand the 'template'
+lcT =  FILETOSTR(lcTemplate)   
+lcT = STRTRAN(lcT,"${basePath}", lcBasePath)
+lcT = STRTRAN(lcT,"${themePath}", lcThemePath)
+lcHtml = STRTRAN(lcT, "${htmlContent}", lcHtml)
 
-STRTOFILE(STRCONV(lcHTML,9),lcFile)
-
+*** Dump to file and preview in Browser
+STRTOFILE(STRCONV(lcHtml,9),lcFile)
 ShellExecute(lcFile)
 
 RETURN

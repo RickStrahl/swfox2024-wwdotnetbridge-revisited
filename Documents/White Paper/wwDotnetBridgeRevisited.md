@@ -1235,32 +1235,50 @@ If you're using Markdown in desktop applications what you'd want to do, likely i
 
 ![Markdown Template Output](MarkdownTemplateOutput.png)
 
-This actually uses styling I picked up from Markdown Monster via templating. This works by creating an HTML template and embedding the rendered markdown into it:
+This actually uses styling I picked up from Markdown Monster via templating. This works by creating an HTML template and embedding the rendered markdown - along with some base paths - into it:
+
+> ##### Beware of TextMerge()
+Initially I used the `TextMerge()` function to merge text, but it turns out that it has difficulty with linefeeds only which are common with Markdown content created in external editors. For certain things like code snippets the stripped line breaks are causing problems. So rather than using `TextMerge()` in the code below I'm explicitly placeholder values in the text.
+
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <base href="<< pcBasePath >>"/>
+    <base href="${basePath}"/>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta charset="utf-8"/>
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <link href="<<pcThemePath>>..\Scripts\fontawesome\css\font-awesome.min.css" rel="stylesheet"/>
-    <link href="<<pcThemePath>>Theme.css" rel="stylesheet"/>
+    <link href="${themePath}..\Scripts\fontawesome\css\font-awesome.min.css" rel="stylesheet"/>
+    <link href="${themePath}Theme.css" rel="stylesheet"/>
 
-
-    <script src="<<pcThemePath>>..\Scripts\jquery.min.js"></script>
-    <link href="<<pcThemePath>>..\Scripts\highlightjs\styles\vs2015.css" rel="stylesheet"/>
-    <script src="<<pcThemePath>>..\Scripts\highlightjs\highlight.pack.js"></script>
-    <script src="<<pcThemePath>>..\Scripts\highlightjs-badge.js"></script>
-    <script src="<<pcThemePath>>..\Scripts\preview.js" id="PreviewScript"></script>
-
+    <!-- All this is for Code Snippet expansion -->
+    <script src="${themePath}..\Scripts\jquery.min.js"></script>
+    <link href="${themePath}..\Scripts\highlightjs\styles\vs2015.css" rel="stylesheet"/>
+    <script src="${themePath}..\Scripts\highlightjs\highlight.pack.js"></script>
+    <script src="${themePath}..\Scripts\highlightjs-badge.js"></script>
+    <script src="${themePath}..\Scripts\preview.js" id="PreviewScript"></script> 
 </head>
 <body>
+  <!-- Optional header for the page -->   
+  <div style="padding: 0.7em; background: #444; color: white; font-size: 0.8em">    
+    <div style="float: right; color: goldenrod; font-weight: 600">    
+      Southwest Fox Conference, 2024
+    </div>
+    <div>
+      <img src="Assets/touch-icon.png" style="max-height: 1.3em; padding-right: 0.4em" />
+      <span style="font-size: 1.35em; font-weight: 600; color: goldenrod; font-weight: 600">wwdotnetbridge Revisited</span> 
+      <i style="font-size: 0.7em">by Rick Strahl</i>
+    </div>    
+  </div>
+
 <div id="MainContent">
+
   <!-- Markdown Monster Content -->
-  <<pcHTML>>
+  
+  ${htmlContent}
+  
   <!-- End Markdown Monster Content -->
 </div>
 
@@ -1268,16 +1286,15 @@ This actually uses styling I picked up from Markdown Monster via templating. Thi
 </html>
 ```
 
+As you can see there are areas to be replaced with `${htmlContent}` and `${basePath}` and `${themePath}` variables.
+
 I then use a `ShowWebPage.prg` file to render the HTML into the template to get the desired styling and other feature support.
 
 ```foxpro
-* FUNCTION ShowWebPage()
-LPARAMETERS lcHtml
-
-ShowHtmlLocal(lcHtml)
+LPARAMETERS lcHTML, lcFile, lcThemePath
 
 ************************************************************************
-FUNCTION ShowHTMLLocal
+* FUNCTION ShowWebPage
 **********************
 ***  Function: Takes an HTML string and displays it in the default
 ***            browser. 
@@ -1288,25 +1305,68 @@ FUNCTION ShowHTMLLocal
 ***            lcFile       -   Temporary File to use (Optional)
 ***            loWebBrowser -   Web Browser control ref (Optional)
 ************************************************************************
-LPARAMETERS lcHTML
-PRIVATE pcBasePath, pcTitle, pcHtml, pcThemePath
+LOCAL lcBasePath, lcThemePath
 
 lcHTML=IIF(EMPTY(lcHTML),"",lcHTML)
-lcFile = SYS(2023)+"\ww_HTMLView.htm"
-pcBasePath = ADDBS(SYS(5) + CURDIR())
-pcThemePath = pcBasePath + "Assets\Westwind\"
-pcTitle = IIF(EMPTY(lcTitle),"",lcTitle)
+lcFile=IIF(EMPTY(lcFile),SYS(2023)+"\ww_HTMLView.htm",lcFile)
+lcBasePath = ADDBS(SYS(5) + CURDIR())
+lcThemePath = lcBasePath + "Assets\Westwind\"
 lcTemplate = "./Assets/Westwind/Theme.html"
 
 IF !EMPTY(lcTemplate)
    lcT =  FILETOSTR(lcTemplate)
-   pcHtml = lcHtml
-   lcHtml = TEXTMERGE(lcT)
+
+   *** TextMerge does weird shit with LineBreaks so do explicit replacements	
+   * lcMerged = TEXTMERGE(lcT)
+   
+   *** For some reason TEXTMERGE strips line feeds
+   lcT = STRTRAN(lcT,"${basePath}", lcBasePath)
+   lcT = STRTRAN(lcT,"${themePath}", lcThemePath)
+   lcHtml = STRTRAN(lcT, "${htmlContent}", lcHtml)
 ENDIF
 
-STRTOFILE(STRCONV(lcHTML,9),lcFile)
-
+*** Dump to file and preview in Browser
+STRTOFILE(STRCONV(lcHtml,9),lcFile)
 ShellExecute(lcFile)
+
+RETURN
+
+
+FUNCTION ShellExecute(tcUrl, tcAction, tcDirectory, tcParms, tnShowWindow)
+
+IF VARTYPE(tnShowWindow) # "N"
+   tnShowWindow = 1
+ENDIF
+
+IF EMPTY(tcUrl)
+   RETURN -1
+ENDIF
+IF EMPTY(tcAction)
+   tcAction = "OPEN"
+ENDIF
+IF EMPTY(tcDirectory)
+   tcDirectory = SYS(2023) 
+ENDIF
+
+DECLARE INTEGER ShellExecute  ;
+    IN SHELL32.dll as ShellExec_1;
+    INTEGER nWinHandle,;
+    STRING cOperation,;
+    STRING cFileName,;
+    STRING cParameters,;
+    STRING cDirectory,;
+    INTEGER nShowWindow
+    
+IF EMPTY(tcParms)
+   tcParms = ""
+ENDIF
+
+RETURN ShellExec_1( _Screen.HWnd,;
+                    tcAction,tcUrl,;
+                    tcParms,tcDirectory,tnShowWindow)
+ENDFUNC
+*   ShellExecute
+
 ```
 
 To use this now becomes pretty simple:
@@ -2124,23 +2184,25 @@ It's simply easier and also considerably more efficient to use a .NET wrapper di
 * Handling events via a Callback class
 * Useful for document change notifications
 * Useful for a Live Reload Manager
-* Uses `System.Net.Filewatcher`
+* Uses `System.Net.FileSystemWatcher`
 
 </i></small>
 
-The .NET Filewatcher is a very useful built-in component that allows you to monitor changes in the file system. You can enable the file watcher to notify you when files change, are added, deleted or renamed. There are many uses for this functionality especially in document centric applications.   
+The .NET `FileSystemWatcher` is a very useful built-in class that can be used to monitor changes in the file system. You can enable the file watcher to notify you when files change, are added, deleted or renamed. There are many uses for this functionality especially in document centric applications.   
   
-I use this functionality in Markdown Monster for example to detect when a document I'm editing has changed. If my document has no changes I can automatically update the document with the new changes from disk for example, or if I do have changes I can pop up a notice that somebody else has changed the file and then provide an option to take mine, take theirs or run a comparison tool to compare and merge changes.
+For example, I use this functionality in Markdown Monster for example to detect when a document I'm editing has changed. If my document has no changes I can automatically update the document with the new changes from disk, or if there are changes I can pop up a notice when saving that the file has been changed since opening. At that point I can pop up a dialog letting me choose between my copy, the changed copy, or do text merge in a Comparison Tool (BeyondCompare for me). Here's what this looks like:
 
 ![Document File Change Detection](https://github.com/RickStrahl/ImageDrop/blob/master/MarkdownMonster/FileChangeDetection.gif?raw=true)
 
-Another use case for this is in Web Connection for the Live Reloading the server if FoxPro code has changed. I can basically monitor for any code changes to PRG files, and if one has been change I can automatically restart the Web server application and run with the new change and at the same time trigger a page refresh in the browser to reload the page. Meanwhile the Web Connection Web connector monitors for changes to Web files and automatically refreshes Web pages when HTML, CSS or JS files change.
+The way this works is that the File Watcher is created when the document is opened and I check for any changes for that specific file only. Then based on current document state the code executes an update or sets a flag that triggers the dialog on save.
 
-It's a powerful feature that comes in handy for many situations.
+Another use case for this is in Web Connection for the Live Reloading the server if FoxPro code has changed. I can basically monitor for any code changes to PRG files, and if one has been change I can automatically restart the Web server application and run with the new change and at the same time trigger a page refresh in the browser to reload the page. Meanwhile the Web Connection Web connector which also uses a `FileSystemWatcher` monitors for changes to Web files and automatically triggers a browser refresh when HTML, CSS or JS files change.
 
-One tricky part about the .NET FileWatcher component is that it is event driven. In this example we'll look at how to set up an event handler that is a Callback class that gets called when a file is changed added or deleted. We'll do this all from FoxPro this time.
+It's a powerful feature and there are lots of use cases for it.
 
-Let's start with the setup code that starts of file monitoring:
+The `FileSystemWatcher` is a tricky component to work with, as it doesn't allow for filtering, so you basically monitor changes to **all files** and then handle filtering as part of your event handling code. The component uses events which is something new to discuss in regards of FoxPro and wwDotnetBridge access to this component.
+
+Let's start with the setup code that starts the file monitoring:
 
 ```foxpro
 loBridge = GetwwDotnetBridge()
@@ -2452,7 +2514,65 @@ Note that the print results may very in quality, depending how well the URL/HTML
 
 ### Async: OpenAI Calls
 
+<small><i>
 
+**Demonstrates:**
+
+* Calling async Task methods 
+* Using Callback handlers to handle async completions
+* Use an OpenAI API library to access various OpenAI services online and locally
+* Some useful scenarios for AI 
+* NuGet Library: [Westwind.Ai](https://github.com/RickStrahl/Westwind.Ai)
+
+</i></small>
+
+For this example I'll create several different types of AI interfaces that perform specific tasks:
+
+* Text Summarization
+* Translations
+* Generic Chat Completions
+
+OpenAI is a company, but the company was one of the first to expose AI as a service, using the OpenAI HTTP API. This API has become an unofficial open standard and so you find OpenAI style APIs that work with multiple AI engines. In this example, we'll use the HTTP service via front end library that abstracts and wraps the API communications and handles the async calls to the server.
+
+#### Westwind.AI Library
+To do this I'll use one of my own .NET Libraries called [Westwind.AI](https://github.com/RickStrahl/Westwind.Ai) that can interface via HTTP with any OpenAI style API. Using this library you can easily connect to:
+
+* OpenAI
+* Azure OpenAI
+* Local Ollama Models
+* Any generic OpenAI server
+
+The library is set up in a way that you can easily switch between service providers so you can quickly switch between online models and local models.
+
+The library supports both Chat Completion interfaces as well as image generation via the OpenAI Dall-E 3 model.
+
+
+#### Online or Local AIs? LLMs and SLMs - Oh my!
+AI comes in all sorts of sizes, but most of you are probably familiar with the large public models or LLMs (Large Language Models) like ChatGPT or CoPilot (Microsoft), Gemini (Google), (, Llama (Meta) and Grok (X). These are commercial Chat bots that typically run in the browser and communicate with online APIs to provide AI results.
+
+ChatGPT and CoPilot both use OpenAI's models, and they are at the moment typically using GTP-4 or GPT-4o-mini to serve chat requests.
+
+That's cool, but you can also access these very same models, directly using the OpenAI API that is exposed by OpenAI, and Microsoft's Azure services online, or for local machines using Ollama (and possibly others). In other words you can use the APIs to access the power of both online LLMs and offline SLMs (Small Language Models) that can run offline on your own machine.
+
+At the moment in my experience the online models tend to be much better at providing results, and also much faster than local models. Running local models on non-AI optimized hardware is pretty slow. While many results for say summarizing a 5000 word document via an LLM takes maybe 5 seconds, it can take 30 seconds with a local SLM. The results also tend to be much more... variable with local SLMs.
+
+So for best results you'll likely want to use one of the major online LLMs and this library specifically supports OpenAI and Azure OpenAI. Both of these run OpenAI models and if you're using one of these you'll likely use either `gpt-4o-mini` or `gpt-4o`. The mini model is smaller, faster and much cheaper version of the full blown `gpt-4` models. 
+
+Both of these online models are paid services and you pay for API access. OpenAI has a pretty simple credit card signup process and you are charged in relatively small increments. Pricing is quite reasonable even though I use the Image Generation and AI features in Markdown Monster extensively I only replenish my account's $20 balance limit once every two months.  Azure Open AI has more complex billing tied to Azure and it uses the same models that OpenAI publishes (with some delay in latest model availability). But it's much more complex to host models as you in effect host your own model service that is tied to a specific model type. Using Azure only makes sense if you have free credits because of a subscription or benefit of some kind, or if you are already heavily using Azure.
+
+#### Running Local AI Models
+Although I mentioned that local models tend to be slower and generally less accurate, it's still very cool that you can run models locally. One big benefit of running local models in a tool like [Ollama](https://ollama.com) is that you are not sending your inputs to an online provider so you have privacy. Also the offline models tend to have much more lax rules of what is allowed in AI output generation. With online models it's very easy to run into **safety restrictions** when running chat or image queries. There are definite free speech restrictions that come into play often in unexpected ways as chat and image queries fixed up by the AI engines. It's much more pronounced with the online services, less so with local AIs although it all depends on how the AI model was tuned.
+
+IAC, for local models I recommend using [Ollama](https://ollama.com/) which is a locally installable AI Host server. You can download and install it on Windows, and then use command line commands to pull down and run models locally. By default there's a command line interface that you can use, but a better way is to install [Open WebUI](https://github.com/open-webui/open-webui) which lets you run a local browser Chat interface to Ollama. This is similar to ChatGPT or CoPilot, but using local models. Open WebUI also lets you find and download models, and easily switch between multiple installed local models.
+
+In this section we'll look at several scenarios. These applications 
+
+#### Generic Chat from FoxPro
+
+
+#### Image Generation
+
+![OpenAI ImageGeneration](OpenAI-ImageGeneration.png)
 
 ### Create a .NET Component and call it from FoxPro
 

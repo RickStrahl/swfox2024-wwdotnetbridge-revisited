@@ -57,6 +57,8 @@ ENDIF
 
 lcHtml = Markdown(lcResult)
 
+_cliptext = lcHtml
+
 ? "Done!"
 ShowWebPage(lcHtml)
 

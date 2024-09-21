@@ -1,26 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <base href="<< pcBasePath >>"/>
+    <base href="${basePath}"/>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta charset="utf-8"/>
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <link href="<<pcThemePath>>..\Scripts\fontawesome\css\font-awesome.min.css" rel="stylesheet"/>
-    <link href="<<pcThemePath>>Theme.css" rel="stylesheet"/>
+    <link href="${themePath}..\Scripts\fontawesome\css\font-awesome.min.css" rel="stylesheet"/>
+    <link href="${themePath}Theme.css" rel="stylesheet"/>
 
-
-    <script src="<<pcThemePath>>..\Scripts\jquery.min.js"></script>
-    <link href="<<pcThemePath>>..\Scripts\highlightjs\styles\vs2015.css" rel="stylesheet"/>
-    <script src="<<pcThemePath>>..\Scripts\highlightjs\highlight.pack.js"></script>
-    <script src="<<pcThemePath>>..\Scripts\highlightjs-badge.js"></script>
-    <script src="<<pcThemePath>>..\Scripts\preview.js" id="PreviewScript"></script>
-
+    <!-- Optional to handle nice Code Snippet formatting -->
+    <script src="${themePath}..\Scripts\jquery.min.js"></script>
+    <link href="${themePath}..\Scripts\highlightjs\styles\vs2015.css" rel="stylesheet"/>
+    <script src="${themePath}..\Scripts\highlightjs\highlight.pack.js"></script>
+    <script src="${themePath}..\Scripts\highlightjs-badge.js"></script>
+    <script src="${themePath}..\Scripts\preview.js" id="PreviewScript"></script> =
 </head>
-<body>
+<body>  
+  <div style="padding: 0.7em; background: #444; color: white; font-size: 0.8em">    
+    <div style="float: right; color: goldenrod; font-weight: 600">    
+      Southwest Fox Conference, 2024
+    </div>
+    <div>
+      <img src="Assets/touch-icon.png" style="max-height: 1.3em; padding-right: 0.4em" />
+      <span style="font-size: 1.35em; font-weight: 600; color: goldenrod; font-weight: 600">
+        wwdotnetbridge Revisited
+      </span> 
+      <i style="font-size: 0.7em">by Rick Strahl</i>
+    </div>    
+  </div>
+
 <div id="MainContent">
+
   <!-- Markdown Monster Content -->
-  <<pcHTML>>
+  ${htmlContent}
   <!-- End Markdown Monster Content -->
 </div>
 

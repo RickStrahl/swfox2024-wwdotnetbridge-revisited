@@ -79,15 +79,32 @@ Great it works!
 
 * [Download Markdown Monster](https://markdownmonster.west-wind.com)
 
-![](https://markdownmonster.west-wind.com/Images/MarkdownMonsterLogo.jpg)
+![](https://markdownmonster.west-wind.com/Images/MarkdownMonsterLogo.jpg)  
 
-### The Markdown Editor for Windows
+**The Markdown Editor for Windows**
+
+## Code Blocks
+Code blocks let you display source code in a formatted way and optionally - if templates are set up well - 
+with optional syntax coloring
+
+Here's some **C# code**:
 
 ```csharp
-int x = 1;
-x++;
-Console.WriteLine(x);
+string text = ".NET Code and components are useful ";
+text += "for expanding FoxPro functionality."
+
+Console.WriteLine(text);
 ```
+
+and here's some **FoxPro code**:
+
+```foxpro
+lcText = "FoxPro Rocks"
+lcText = lcText + " at Southwest Fox"
+
+? lcText
+```
+
 
 ENDTEXT
 
