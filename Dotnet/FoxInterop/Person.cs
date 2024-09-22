@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 
 /*
     Rename  namespace and class to fit your needs
     Below is an example of a class.
 */
 
-namespace ChangeMe
+namespace FoxInterop
 {
+    
     public class Person
     {
         public string Name { get; set; } =  "Jane Doe";
@@ -14,13 +16,23 @@ namespace ChangeMe
         public DateTime Entered { get; set; } = DateTime.UtcNow;
         public Address Address { get; set; } = new Address();
 
+        public List<Address> AlternateAddresses { get; set; } = new List<Address>();
+
+
         public override string ToString() 
         {
-            return $"{Name} ({Company})";
-        }
+            var output =  $"{Name} ({Company})\n${Address}";
 
-        public List<Address> AlternateAddresses { get; set; } = new List<Address>();
-        
+            if (AlternateAddresses.Count > 0)
+            {
+                foreach (var addr in AlternateAddresses)
+                {
+                    output += $"\n${addr}";
+                }
+            }
+            return output;
+        }
+        public List<Address> AlternateAddresses { get; set; } = new List<Address>();        
                 
     }
 

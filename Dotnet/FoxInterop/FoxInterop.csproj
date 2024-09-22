@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>    
+    <TargetFramework>net472</TargetFramework>    
+
+    <!-- Optional: Output to a specific folder -->    
+    <OutputPath>..\..\bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>    
+
+  </PropertyGroup>
+</Project>

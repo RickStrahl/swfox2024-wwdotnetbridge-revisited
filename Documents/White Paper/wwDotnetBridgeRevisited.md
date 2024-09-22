@@ -3011,9 +3011,279 @@ Image generation is integrated with an interactive editor and image manager that
 All of these features are implemented using the same library I've shown in the samples above, so these examples are real world integrations that are in production in a commercial application.
 
 #### AI Summary
-Using this AI library makes short work of integrating AI functionality into applications. What I've shown are kind of boring but practical applications of AI functionality which is probably a good use of this technology. Finding more innovative usage for this tech is not easy because it's really hard to predict exactly what the result from an AI query look like. As you've seen even with these simple examples, results can vary wildly between runs **even with the same exact data**.  So, play around with the features, but be mindful of how reliable the tools are for the job that you need it to actually perform before jumping in over your head.
+Using this AI library makes short work of integrating AI functionality into applications. What I've shown are kind of boring, but practical applications of AI functionality that I've actually used and which is probably a good use of this technology. 
+
+Keep in mind that in the current state, AI serves best as an **assistant** that **helps** with existing tasks and operations, rather than as a reliable automation tool.
+
+Although there's tons of talk how AI will eat the world, finding more innovative usage for this tech is not easy, because it's really hard to predict exactly what the result from an AI queries look like. As you've seen even with these simple examples, results can vary wildly between runs, **even with the same exact data** and even with very simple deterministic requests. 
+
+So, play around with AI features, but be mindful of how reliable the tools are for the job that you need it to actually perform, before jumping in over your head. 
 
 ### Create a .NET Component and call it from FoxPro
+In the course of the examples I've shown there were a couple ([wwDotnetBridge 101](#create-a-net-component-and-call-it-from-foxpro) and [Humanizer](#humanize-numbers-dates-measurements)) where I demonstrated using a .NET class of our own to create logic. Let's take a look and see how we can actually do that, using the new and much lighter weight .NET SDK tools, that require no specific tools.
+
+The good news is that there's now a .NET SDK that you can download that includes everything you need to compile, build and run .NET applications. It's a single, couple of minutes install and you're ready to start creating .NET code. All you really need is:
+
+* .NET SDK ([download](https://dotnet.microsoft.com/en-us/download))
+* A text editor
+* A Powershell or Command Terminal Window
+
+You don't need Visual Studio any longer, although if you plan on doing serious .NET development and you want to effectively debug components you build you may still want to use it. Regardless though you can use the SDK and Visual Studio - or any other .NET tools side by side interchangeably.
+
+> ##### @icon-lightbulb It's not your Windows .NET anymore
+> Part of the reason for this shift to more generic tooling is that .NET is no longer a Windows only platform - you can build .NET applications for Mac and Linux. In fact any non-UI and Web applications you build tend to be completely cross-platform out of the box unless you explicitly add platform specific features (ie. Windows API calls, or UI features).
+
+For purposes of this discussion, the goal is to create a .NET Class library that we can call from FoxPro, which means we want to create a new **Class Library** project.
+
+#### Creating new Projects
+.NET now lets you create new projects from the command line via the `dotnet new` command. 
+
+For FoxPro usage we preferably create projects for .NET Framework - which targets `net472` or `net481` (4.7.2 recommended since it covers a wider ranger of stock installations).
+
+Unfortunately the SDK does not allow creating .NET Framework projects directly,  **even though the SDK certainly supports building NET Framework projects**. The problem is that newer project types use features that aren't supported for .NET framework, so while you can easily create .NET Core projects and make a few changes, it's a bit of a pain.
+
+The closest you'll get is by targeting `netstandard2.0`. .NET Standard works with .NET Framework, but ideally you want to target `net472` so we'll end up using `netstandard2.0` and changing the target.
+
+Let's start by going to a parent folder into which we want to create a new project (for samples, into the `dotnet` folder to create `dotnet\FoxInterop`)
+
+Make sure you explicitly specify the target framework and use `-f netstandard2.0` as it's the only bare bones project type that's close to what you want for .NET framework.
+
+```powershell
+# go to a parent folder - project is created below
+dotnet new classlib -n FoxInterop -f netstandard2.0
+cd FoxInterop
+
+# Open an editor in the folder - VS Code here
+code .  
+```
+
+Here's what you'll see:
+
+![Vs Code Project Netstandard](VsCodeProjectNetstandard.png)
+
+So you'll want to change the target from `netstandard2.0` to `net472`:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+  </PropertyGroup>
+
+</Project>
+```
+
+The class generated is empty.
+
+```cs
+using System;
+
+namespace FoxInterop
+{
+    public class Class1
+    {
+
+    }
+}
+```
+
+And now you're off to the races.
+
+#### Output to a specific Folder
+If you're building for FoxPro you'll likely want your .NET output to go to a specific. It turns out that by default output is created in a complex folder structure below the project.
+
+If you'd rather put the output in your application's output folder (or a bin folder as I like to do for me dependencies) you can change the project file to the following:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>    
+    <TargetFramework>net472</TargetFramework>    
+
+    <!-- Optional: Output to a specific folder -->    
+    <OutputPath>..\..\bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>    
+
+  </PropertyGroup>
+</Project>
+```
+
+In this case I dump the output directly into my bin folder where the samples can find it.
+
+#### Creating a Sample Class
+To create something semi-useful lets create a .NET class and see if we can compile it and access it from FoxPro:
+
+```csharp
+namespace FoxInterop
+{
+    public class Person
+    {
+        public string Name { get; set; } =  "Jane Doe";
+        public string Company { get; set; } = "Acme Inc.";
+        public DateTime Entered { get; set; } = DateTime.UtcNow;
+        public Address Address { get; set; } = new Address();
+
+        public override string ToString() 
+        {
+            return $"{Name} ({Company})\n${Address}";
+        }
+    }
+
+    public class Address
+    {
+        public string Street { get; set; }  =  "123 Main St.";
+        public string City { get; set; }    =  "Anytown";
+        public string State { get; set; }   =  "CA";
+        public string PostalCode { get; set; }  =  "12345";
+
+        public override string ToString() 
+        {
+            return $"{Street}, {City}, {State} {PostalCode}";
+        }
+    }
+
+}
+```
+
+The Person class has a few simple properties as well as a nested `Address` object that is automatically initialized. This is good practice to ensure that the `Address` is never null even if it can be 'empty'.
+
+#### Build the Project
+Next you'll need to actually build the project and you can do this from the Terminal via `dotnet build` from the project's folder.
+
+Here's what a sucessful build looks like using the built-in terminal in VsCode:
+
+![Vs Code Build Project](VsCodeBuildProject.png)
+
+If the compilation works you'll see a success message, otherwise you'll get an error in the command window along with a line number reference that you can click on:
+
+![Vs Code Build Error](VsCodeBuildError.png)
+
+#### Use it in FoxPro
+Assuming you get a successful build, the project has built a .NET Assembly (a DLL) into the `.\bin` folder where it's accessible to our FoxPro code.
+
+> Note that there's `_startup.prg` that adds the `.\Bin` folder to FoxPro's path and allows .NET assemblies to be loaded out of that folder. All samples call the `_startup.prg` just in case it's not explicitly set.
+
+So now we can create an instance of our .NET class quite simply. You can type the following into the FoxPro command window, or - better - create a small PRG file to run the code. 
+
+```foxpro
+CLEAR
+DO _startup.prg
+
+DO wwDotnetBRidge
+loBridge = GetwwDotnetBridge()
+? loBridge.LoadAssembly("foxInterop.dll")
+loPerson = loBridge.CreateInstance("FoxInterop.Person")
+
+*** Access the default property values
+? loPerson.Name
+? loPerson.Entered
+
+*** Call a method
+? loPerson.ToString()
+```
+
+You can also access the nested `Address` object individually:
+
+```foxpro
+? loPerson.Address.Street
+? loPerson.Address.City
+? loPerson.Address.ToString()
+```
+
+Next, in the C# code, let's add a collection of addresses and update the `ToString()` code to display those addresses if they are present:
+
+
+```csharp
+public List<Address> AlternateAddresses { get; set; } = new List<Address>();
+
+public override string ToString() 
+{
+    var output =  $"{Name} ({Company})\n${Address}";
+
+    if (this.AlternateAddresses.Count > 0)
+    {
+        foreach (var addr in AlternateAddresses)
+        {
+            output += $"\n${addr}";
+        }
+    }
+    return output;
+}
+```
+
+Now **rebuild the project** from the Terminal:
+
+```ps
+dotnet build
+```
+
+But - you likely are running into a problem now, namely that the output assembly is locked, because the FoxPro application has it loaded. So you first have to unload FoxPro (or any running application using the assembly). 
+
+Then do the build again. Now it works!
+
+Launch FoxPro again and let's add some more code to our test program to add a couple of new alternate addresses.
+
+Let's start by accessing the AlternateAddresses. Notice that the type is `List<Address>` which is a Generic List object. If you recall, Generics cannot be accessed by FoxPro directly, so we have to indirectly access using `GetProperty()`:
+
+```foxpro
+*** Get ComArray of Address
+loAddresses = loBridge.GetProperty(loPerson,"AlternateAddresses")
+
+? loAddresses.Count && 0
+```
+
+`GetProperty()` in this case returns a `ComArray` object which is an object wrapper around .NET collections. The wrapper allows you to read, add, update and delete items in many different array, list, collection and dictionary types.
+
+In this case we want to add a new item which we can do by using `CreateItem()` to create a new object of the list's item type, and `Add()` to add the newly
+
+```foxpro
+*** Create a new detail items
+loAddress = loAddresses.CreateItem()
+loAddress.Street = "3123 Nowhere Lane"
+loAddress.City = "Nowhere"
+
+*** Add to the list of addresses
+loAddresses.Add(loAddress)
+
+loAddress = loAddresses.CreateItem()
+loAddress.Street = "43 Somewhere Lane"
+loAddress.City = "Somewhere"
+
+*** Add to the list of addresses
+loAddresses.Add(loAddress)
+
+*** Print - should include the new address
+? loPerson.ToString()
+```
+
+#### Using .NET from FoxPro is a good Choice for many Scenarios
+And there you have it - it's pretty simple to create a .NET component and call it from FoxPro. 
+
+This is quite useful if you need to interact with .NET components that:
+
+* Require lots of code to interact with
+* Require complex types that are hard to access from FoxPro
+
+As a general rule these days for almost every FoxPro application I create one matching .NET assembly into which I can then easily stuff many small .NET components that can all be called from FoxPro rather than having to figure out how to call various components from FoxPro using wwDotnetBridge indirect access methods. Unless code is super simple, I almost always rather opt for writing in .NET code vs. writing verbose code in FoxPro.
+
+As a bonus this allows you to get your feet wet with .NET code. Using class library extensions like this is a great way to create small bits of .NET code without having to go full bore of a full conversion. You can gain external functionality that otherwise wouldn't be there while still maintaining the ability to easily edit and recompile the code for changes.
+
+It's a win win scenario.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ideally you
 
 
 
