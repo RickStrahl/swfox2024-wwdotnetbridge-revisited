@@ -42,10 +42,6 @@ namespace wwDotnetBridgeDemos
             return address;
         }
 
-
-        public string DisplayName =>   (Name ?? string.Empty) +  
-            (!string.IsNullOrEmpty(Company) ?  $" ({Company})" : string.Empty);
-
         public override string ToString()
         {
             return DisplayName + "\r\n" + 

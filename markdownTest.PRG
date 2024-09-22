@@ -6,10 +6,7 @@ DO MarkdownParser
 CLEAR
 
 *** Straight Code
-#IF .F.
-
-
-
+#IF .T.
 DO wwutils && For Html Preview
 do wwDotNetBridge
 LOCAL loBridge as wwDotNetBridge
@@ -35,6 +32,31 @@ Great it works!
 
 > #### Examples are great
 > This is a block quote with a header
+
+## Code Blocks
+Code blocks let you display source code in a formatted way and optionally - if templates are set up well - 
+with optional syntax coloring
+
+Here's some **C# code**:
+
+```csharp
+string text = ".NET Code and components are useful ";
+text += "for expanding FoxPro functionality."
+
+Console.WriteLine(text);
+```
+
+and here's some **FoxPro code**:
+
+```foxpro
+lcText = "FoxPro Rocks"
+IF !EMPTY(lcText)
+   lcText = lcText + " at Southwest Fox"
+ENDIF	
+
+? lcText
+```
+
 ENDTEXT
 
 ***  Actual Markdown Conversion here - Invoke a Static Method
@@ -45,7 +67,8 @@ lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",;
 * lchtml =  Markdown(lcMarkdown, 2)
 
 ? lcHtml
-ShowHtml(lcHtml)  && from wwUtils show in browser unformatted
+*ShowHtml(lcHtml)  && from wwUtils show in browser unformatted
+ShowWebPage(lcHtml)
 
 RETURN
 #ENDIF
@@ -79,7 +102,7 @@ Great it works!
 
 * [Download Markdown Monster](https://markdownmonster.west-wind.com)
 
-![](https://markdownmonster.west-wind.com/Images/MarkdownMonsterLogo.jpg)  
+![](https://markdownmonster.west-wind.com/Images/MarkdownMonsterLogo.jpg){style="max-width: 700px;"}
 
 **The Markdown Editor for Windows**
 
@@ -100,7 +123,10 @@ and here's some **FoxPro code**:
 
 ```foxpro
 lcText = "FoxPro Rocks"
-lcText = lcText + " at Southwest Fox"
+
+IF !EMPTY(lcText)
+   lcText = lcText + " at Southwest Fox"
+ENDIF
 
 ? lcText
 ```

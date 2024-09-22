@@ -2,13 +2,13 @@
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
 		<Version>1.0</Version>
+
 		<OutputPath>..\..\bin</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>		
 		
 		<AssemblyTitle>wwDotnetBridge Demos</AssemblyTitle>
 		<Title>wwDotnetBridge Demos</Title>				
 	
-
 		<Authors>Rick Strahl</Authors>
 		<Company>West Wind Technologies</Company>
 		<Copyright>Rick Strahl, West Wind Technologies,2024</Copyright>
@@ -26,12 +26,7 @@
 		<DefineConstants>NETFULL</DefineConstants>
 	</PropertyGroup>
 	<ItemGroup>
+	  <!-- `Core` library doesn't include all the localizations -->
 	  <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-	  <PackageReference Include="Markdig" Version="0.37.0" />
-	  <PackageReference Include="WeCantSpell.Hunspell" Version="5.0.0" />
-	  <PackageReference Include="Westwind.Utilities" Version="5.0.8.2" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Reference Include="System.Windows.Forms" />
 	</ItemGroup>
 </Project>

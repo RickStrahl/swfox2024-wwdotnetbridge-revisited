@@ -5,7 +5,6 @@ DO wwutils
 do wwDotNetBridge
 
 *** We have to keep the completions alive
-PUBLIC poCompletions
 loBridge = GetwwDotnetBridge()
 ? loBridge.LoadAssembly("Westwind.Ai.dll")
 
@@ -29,14 +28,17 @@ IF EMPTY(lcLanguage)
   lcLanguage = "German"
 ENDIF  
 
-poCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
-
+loCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
 lcSystem = "You are a translator and you translate text from one language to another. " +;
            "Return only the translated text"
 lcPrompt = "Translate from English to " + lcLanguage + CHR(13) + CHR(13) + lcTranslateText
 
+*** Set up the callback event handler - OnCompleted/OnError
 loCallback = CREATEOBJECT("OpenAiCallback")
-loBridge.InvokeTaskMethodAsync(loCallback, poCompletions,"Complete",lcPrompt, lcSystem, .F.)
+loCallback.oCompletions = loCompletions && pass so we can access in callback
+
+*** Make the API call asynchronously - returns immediately
+loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lcSystem, .F.)
 
 ? "*** Program completes. Async call continues in background."
 ?
@@ -51,11 +53,13 @@ RETURN
 DEFINE CLASS OpenAICallback as AsyncCallbackEvents
 **************************************************
 
+oCompletions = null
+
 *** Returns the result of the method and the name of the method name
 FUNCTION OnCompleted(lcResult,lcMethod)
 
-IF (poCompletions.HasError)
-    ? "Error: " + poCompletions.ErrorMessage
+IF (this.oCompletions.HasError)
+    ? "Error: " + this.oCompletions.ErrorMessage
     RETURN
 ENDIF
 

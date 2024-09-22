@@ -2004,6 +2004,7 @@ When this happens it's necessary to set up the appropriate assembly redirects th
 
 In this example, we'll see an example of creating a custom .NET DLL of our own and calling it from FoxPro. Humanizer is a cool library for text formatting that - as the name suggests - provides friendly naming for many common types. For example, things like using *Today* or *10 days ago* for dates, turning numbers into strings, pluralizing text, camel or snake casing un-casing of text, turning bytes into friendly descriptions and so on.
 
+#### Examples of Humanizing Number, Dates, Words, Sizes, and more
 What's different with this example and why I prefer to delegate access of features to a .NET wrapper class is that Humanizer implements most of its functionality as extension methods and it uses a lot of nullable types. It's possible to access these features through wwDotnetBridge, but it's just significantly easier to do from within .NET and it's possible to create a very simple .NET class that exposes the features we want directly to FoxPro without the need of a FoxPro wrapper class.
 
 To demonstrate some of the features of Humanizer and the functions I've exposed here's an example of the FoxPro code that uses the .NET wrapper component first:
@@ -2174,8 +2175,6 @@ It's simply easier and also considerably more efficient to use a .NET wrapper di
 
 ### A File System Watcher and Live Reload (Event Handling)
 
-
-### Async: Use OpenAI for common AI Operations
 <small><i>
 
 **Demonstrates:**
@@ -2189,7 +2188,8 @@ It's simply easier and also considerably more efficient to use a .NET wrapper di
 </i></small>
 
 The .NET `FileSystemWatcher` is a very useful built-in class that can be used to monitor changes in the file system. You can enable the file watcher to notify you when files change, are added, deleted or renamed. There are many uses for this functionality especially in document centric applications.   
-  
+
+#### Real World Examples of Monitoring Files  
 For example, I use this functionality in Markdown Monster for example to detect when a document I'm editing has changed. If my document has no changes I can automatically update the document with the new changes from disk, or if there are changes I can pop up a notice when saving that the file has been changed since opening. At that point I can pop up a dialog letting me choose between my copy, the changed copy, or do text merge in a Comparison Tool (BeyondCompare for me). Here's what this looks like:
 
 ![Document File Change Detection](https://github.com/RickStrahl/ImageDrop/blob/master/MarkdownMonster/FileChangeDetection.gif?raw=true)
@@ -2200,6 +2200,7 @@ Another use case for this is in Web Connection for the Live Reloading the server
 
 It's a powerful feature and there are lots of use cases for it.
 
+#### Using Async Callbacks to get File System Notifications in FoxPro
 The `FileSystemWatcher` is a tricky component to work with, as it doesn't allow for filtering, so you basically monitor changes to **all files** and then handle filtering as part of your event handling code. The component uses events which is something new to discuss in regards of FoxPro and wwDotnetBridge access to this component.
 
 Let's start with the setup code that starts the file monitoring:
@@ -2383,7 +2384,7 @@ The file watcher has no file matching filters that can be applied to the events 
 
 Another tricky part about the file watcher is knowing exactly what the event interface looks like which [in this case can be found here](https://learn.microsoft.com/en-us/dotnet/api/system.io.filesystemwatcher.changed?view=net-8.0).
 
-As mentioned all events have to be implemented but you can certainly provide null events that don't do anything. If you don't care about renaming, just immediately return in the `OnRenamed` event.
+As mentioned **all events on the event interface have to be implemented**, but you can certainly provide do nothing event handling the simple exit immediately. If you don't care about renaming, just immediately return in the `OnRenamed` event.
 
 When you run this demo you might also notice that some events like the change events fire multiple times. That's because there are filters that you can set on what can be monitored and many file operation might trigger for multiple matches to these triggers. It might be file data change and data change. Making the file watcher behave often involves ignoring repeated events and playing around with the event filters.
 
@@ -2405,9 +2406,15 @@ This is a small example that demonstrates how to print HTML documents to PDF fil
 
 This and the following example require the use of `async Task` code in .NET as the task of printing to PDF can take a bit of time. So rather than waiting for completion the operation is `async` and calls you back when the task is complete. 
 
-wwDotnetBridge includes a `InvokeTaskMethodAsync()` which allows passing a Callback handler object that is notified the async operation completes either via a `OnComplete()` or `OnError()` handler.
+#### Introducing InvokeTaskMethodAsync()
+wwDotnetBridge includes a `InvokeTaskMethodAsync()` which calls an async method and responds back via a Callback object that you pass in. This is similar to the way the FoxPro `EVENTHANDLER()` function works except that we're passing the callback and event method through to .NET rather than to a COM object.
 
-Let's take a look. Let's start with the mainline setup code that starts the Html to Pdf operation.
+The `AsyncCallbackEvents` handler object that is passed to the method is notified when the async operation completes either via a `OnComplete()` or `OnError()` handler. Unlike the event interface we discussed in the last example, here we only have to implement two methods and they always have the same signature, although `OnComplete()` will receive a different result each time, depending on a successful return value from the async operation.
+
+#### Printing PDF Output from HTML Input
+Let's take a look by way of an example that uses a third party (mine) .NET component that converts PDF documents to HTML using the Edge WebView runtime in Windows using the `Westwind.WebView.HtmlToPdf` component.
+
+Let's start with the mainline setup code that starts the Html to Pdf operation.
 
 ```foxpro
 LPARAMETER lcUrl, lcOutputFile
@@ -2454,7 +2461,12 @@ loBridge.InvokeTaskmethodAsync(loCallbacks, loPdf,
 GoUrl(lcUrl)   && Display PDF
 ```
 
-The base behavior for this class is very simple - you call a single method to perform the Html to PDF conversion. You basically provide a Url or Filename to an HTML document, and an optional output filename and the engine will create a PDF document.
+The base behavior for this class is very simple - you call a single method to perform the Html to PDF conversion. You basically provide a Url or Filename to an HTML document, and an optional output filename. The engine then renders the HTML in the WebView instance and uses the WebView's built-in PDF engine - the same engine that's used for printing and PDF printing - and renders the active HTML document as best as it can to PDF. 
+
+> ##### @icon-info-circle PDF Output Generation isn't an exact Science
+> PDF output is basically **Print output**, so the PDF output generated will be the same as what you see in Print Preview window of any Chromium browser. So if you want to get an idea how well PDF printing works for a specific document/url you can test the output before you ever try to print it.
+> 
+> Print output of HTML can be effected by HTML styling - not everything that renders well as HTML prints well. Additionally it's very useful to add print specific CSS styling that simplifies HTML rendering, uses specific built-in fonts etc. to optimize printing.  When it comes to print output simpler is better - and plain semantic HTML (ie. document centric output) works best.
 
 The call `PrintToPdfAsync()` is async so it returns immediately. You pass in a Callback handler object that is called back when the print operation completes - or fails. You also pass the Url, output file and a settings object which allows customizing a few things about the PDF output generation.
 
@@ -2492,7 +2504,9 @@ You inherit from AsyncCallbackEvents and implement two methods:
 * OnCompleted(lvResult, lcMethod)
 * OnError(lcMessage, loException, lcMethod)
 
-One of these two will always be called. On success we simply go and display the PDF file in the browser via `GoUrl(this.cOutputFile)`. Note that the class adds a custom `cOutputFile` property that is set when the class is instantiated. Use the property interface to pass values that you need from the mainline into the callback class.
+The reason for inheriting is that in some cases you may not need to handle either of these methods - in fire and forget scenarios for examples. In other cases you don't care about errors and you can omit the `OnError` handler - the base class can capture and ignore the events. **One of these two events will always be called** though - and hence the base class to ensure that the methods exist. 
+
+In this example, on success we simply go and display the PDF file in the browser via `GoUrl(this.cOutputFile)`. Note that the class adds a custom `cOutputFile` property that is set when the class is instantiated. Use the property interface to pass values that you need from the mainline into the callback class.
 
 As with the Event code in the previous example, keep event handler methods very short running and have minimal impact on the application state. Ideally capture what you need store it somewhere and then process it from the mainline code.
 
@@ -2531,6 +2545,7 @@ For this example I'll create several different types of AI interfaces that perfo
 * Text Summarization
 * Translations
 * Generic Chat Completions
+* Image Generation
 
 OpenAI is a company, but the company was one of the first to expose AI as a service, using the OpenAI HTTP API. This API has become an unofficial open standard and so you find OpenAI style APIs that work with multiple AI engines. In this example, we'll use the HTTP service via front end library that abstracts and wraps the API communications and handles the async calls to the server.
 
@@ -2546,15 +2561,14 @@ The library is set up in a way that you can easily switch between service provid
 
 The library supports both Chat Completion interfaces as well as image generation via the OpenAI Dall-E 3 model.
 
-
 #### Online or Local AIs? LLMs and SLMs - Oh my!
-AI comes in all sorts of sizes, but most of you are probably familiar with the large public models or LLMs (Large Language Models) like ChatGPT or CoPilot (Microsoft), Gemini (Google), (, Llama (Meta) and Grok (X). These are commercial Chat bots that typically run in the browser and communicate with online APIs to provide AI results.
+AI comes in all sorts of sizes, but most of you are probably familiar with the large public models or LLMs (Large Language Models) like ChatGPT or CoPilot (Microsoft), Gemini (Google), Llama (Meta) and Grok (X). These are commercial Chat bots that typically run in the browser and communicate with online APIs to provide AI results.
 
-ChatGPT and CoPilot both use OpenAI's models, and they are at the moment typically using GTP-4 or GPT-4o-mini to serve chat requests.
+ChatGPT and CoPilot both use OpenAI's models, and they are at the moment typically using GTP-4 or GPT-4o-mini to serve chat requests. 
 
-That's cool, but you can also access these very same models, directly using the OpenAI API that is exposed by OpenAI, and Microsoft's Azure services online, or for local machines using Ollama (and possibly others). In other words you can use the APIs to access the power of both online LLMs and offline SLMs (Small Language Models) that can run offline on your own machine.
+Web based chat bots are cool to play with and useful for assistance tasks, but you can also access these very same models directly from your applications, by using the OpenAI API that is exposed by OpenAI, and Microsoft's Azure services online, or for local machines and many supported local models using Ollama (there are others that also use OpenAI APIs but I haven't tried them since Ollama works well). In other words you can use the APIs to access the power of both online LLMs and offline SLMs (Small Language Models) that can run offline on your own machine.
 
-At the moment in my experience the online models tend to be much better at providing results, and also much faster than local models. Running local models on non-AI optimized hardware is pretty slow. While many results for say summarizing a 5000 word document via an LLM takes maybe 5 seconds, it can take 30 seconds with a local SLM. The results also tend to be much more... variable with local SLMs.
+At the moment online models tend to be much better at providing results, and also much faster than local models. Running local models on non-AI optimized hardware is pretty slow even when running on a reasonably poweful GPU. While many results for say summarizing a 5000 word document via an LLM takes maybe 5 seconds, it can take 30 seconds with a local SLM. The results also tend to be much more... variable with local SLMs. Most of the SLMs I've used for the examples I show here, produce very inconsistent results while the online LLM provide pretty solid results. I suspect this will improve in the future as LLMs are quickly becoming unsustainable for energy and resource usage, and more AI processing eventually will have to local machines. But we're not there yet...
 
 So for best results you'll likely want to use one of the major online LLMs and this library specifically supports OpenAI and Azure OpenAI. Both of these run OpenAI models and if you're using one of these you'll likely use either `gpt-4o-mini` or `gpt-4o`. The mini model is smaller, faster and much cheaper version of the full blown `gpt-4` models. 
 
@@ -2565,14 +2579,422 @@ Although I mentioned that local models tend to be slower and generally less accu
 
 IAC, for local models I recommend using [Ollama](https://ollama.com/) which is a locally installable AI Host server. You can download and install it on Windows, and then use command line commands to pull down and run models locally. By default there's a command line interface that you can use, but a better way is to install [Open WebUI](https://github.com/open-webui/open-webui) which lets you run a local browser Chat interface to Ollama. This is similar to ChatGPT or CoPilot, but using local models. Open WebUI also lets you find and download models, and easily switch between multiple installed local models.
 
-In this section we'll look at several scenarios. These applications 
+#### Generic Chat Completions from FoxPro
+Ok, let's take a look at a few practical examples using **Chat Completions**. Chat completions is basically the same interface that you use with ChatGPT or CoPilot where **you specify a prompt** and the AI provides a response. You can provide an **Input Prompt** which is your request, and also a **System Prompt** which assigns the AI a **Role**. The default role of most general purpose AIs is *You are a helpful assistant.*, but you can modify that.
 
-#### Generic Chat from FoxPro
+So I start with two practical examples that provide Text Summaries and Language Translation.
 
+###### Text Summary
+So the first example is using chat completions to do text summaries of a block of text. This is a quite useful feature and using the library I use here, relatively easy to do.
+
+Let's start with LinqPad to see what the .NET code looks like:
+
+![OpenAi Summary LinqPad](OpenAi-Summary-LinqPad.png)
+
+As you can see the key bit of code is the `async` call:
+
+```cs
+string result = await chat.Complete(prompt, systemPrompt, false);
+```
+
+Like in the Html to Pdf example we'll need to using `InvokeTaskMethodAsync()` with a Callback object in FoxPro in order to get asynchronously called back when the relatively slow chat completion returns:
+
+```foxpro
+LPARAMETERS lcTextToSummarize
+LCOAL loBridge as wwDotNetBridge, loCompletions
+
+loBridge = GetwwDotnetBridge()
+
+*** Using OpenAI API
+loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
+loConnection.ApiKey = GETENV("OPENAI_KEY")
+loConnection.ModelId = "gpt-4o-mini"  && "gpt-3-turbo" (default so not really neccessary)
+
+IF EMPTY(lcTextToSummarize)
+    ? "Please provide some text to summarize."
+	RETURN
+ENDIF
+
+*** Create Chat client and pass configuration
+loCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
+
+*** Our prompt text/question
+lcPrompt = lcTextToSummarize
+
+*** Specify a role for the AI
+lcSystem = "You are a technical writer and are tasked to summarize input text succinctly " +;
+           "in no more than 4 sentences. Return only the result summary text."
+
+*** Callback object that fires OnComplete/OnError events translation is done
+loCallback = CREATEOBJECT("OpenAiCallback")
+loCallback.oCompletions = loCompletions  
+
+*** Async call starts here - returns immediately
+loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lcSystem, .F.)
+
+? "*** Program completes. Async call continues in background."
+? "Summarizing..."
+```
+
+This code is made up of three steps:
+
+* Setting up the OpenAI Connection
+* Setting up the prompt
+* Calling the OpenAI API
+
+The code's comments describe each operation, as it occurs. The async call returns immediately and there's no success or failure information. Instead the result is handled in the `OpenAiCallback` class which implements the `OnCompleted()`  and `OnError()` methods:
+
+```foxpro
+DEFINE CLASS OpenAICallback as AsyncCallbackEvents
+
+oCompletions = null
+
+*** Returns the result of the method and the name of the method name
+FUNCTION OnCompleted(lcResult,lcMethod)
+
+IF (this.oCompletions.HasError)
+    ? "Error: " + THIS.oCompletions.ErrorMessage
+    RETURN
+ENDIF
+
+? "Summary:"
+? "----------"
+? lcResult
+
+ENDFUNC
+
+* Returns an error message, a .NET Exception and the method name
+FUNCTION OnError(lcMessage,loException,lcMethod)
+? "Error: " + lcMethod,lcMessage
+ENDFUNC
+
+ENDDEFINE
+```
+
+To test this out you can copy some text to the clipboard and let it summarize. Just for kicks I took the massive Markdown content of this very white paper and put it in my clipboard. On my machine the result comes back in about 3-4 seconds with a very capable response.
+
+The `OnCompleted()` method receives the result value from the async call, along with the name of hte method that was called. The latter can be useful if you use the same Callback handler for multiple methods or calls simultaneously and these results might come back at different times.
+
+The value in this case is a text completion, so it's plain text.
+
+OpenAI responses can be returned as text, which in many cases can be markdown. For direct scenarios like the above of text summarization the text is usually returned as plain text as there's nothing to really format. However, for more complex results you will often see Markdown. We'll look at some examples later that demonstrate how to deal with that.
+
+#### Translations
+For the next example lets do essentially the same thing, except this time we'll run translations from one language to another. Essentially the code here is nearly identical to the last example, except that the prompt and system prompt are different along with some of the messages:
+
+```foxpro
+LPARAMETERS lcTranslateText, lcLanguage
+
+*** We have to keep the completions alive
+loBridge = GetwwDotnetBridge()
+loBridge.LoadAssembly("Westwind.Ai.dll")
+
+lcOpenAiKey = GETENV("OPENAI_KEY")
+
+loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
+
+loConnection.ApiKey = lcOpenAiKey
+loConnection.ModelId = "gpt-4o-mini"
+
+IF EMPTY(lcTranslateText)
+   lcTranslateText = "Genius is one percent inspiration, ninety-nine percent perspiration."
+ENDIF
+IF EMPTY(lcLanguage)
+  lcLanguage = "German"
+ENDIF  
+
+loCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
+lcSystem = "You are a translator and you translate text from one language to another. " +;
+           "Return only the translated text."
+lcPrompt = "Translate from English to " + lcLanguage + CHR(13) + CHR(13) + lcTranslateText
+
+*** Set up the callback event handler - OnCompleted/OnError
+loCallback = CREATEOBJECT("OpenAiCallback")
+loCallback.oCompletions = loCompletions && pass so we can access in callback
+
+*** Make the API call asynchronously - returns immediately
+loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lcSystem, .F.)
+
+? "Translating from English..."
+? "--------------"
+? lcTranslateText
+
+****************************************************************
+DEFINE CLASS OpenAICallback as AsyncCallbackEvents
+**************************************************
+oCompletions = null
+
+*** Returns the result of the method and the name of the method name
+FUNCTION OnCompleted(lcResult,lcMethod)
+
+IF (this.oCompletions.HasError)
+    ? "Error: " + this.oCompletions.ErrorMessage
+    RETURN
+ENDIF
+
+? "To German:"
+? "----------"
+? lcResult
+ENDFUNC
+
+FUNCTION OnError(lcMessage,loException,lcMethod)
+? "Error: " + lcMethod,lcMessage
+ENDFUNC
+
+ENDDEFINE
+```
+
+Again this sample works best with text from the clipboard. Select and copy some text, then translate by doing:
+
+```foxpro
+DO openAITranslation with _Cliptext, "German"
+
+
+DO openAITranslation with _Cliptext, "French"
+```
+
+Cool, right?
+
+Again, if you run these operations multiple times, you'll find that each time it'll translate slightly differently using different words or phrasings. OpenAI does a pretty good job however - I speak fluent German and it usually returns even colloquial German text, even though there's variance.
+
+#### Using Local LLMs with Ollama
+Using the OpenAI online model uses the OpenAIConnection like this:
+
+```foxpro
+*** Using OpenAI API
+loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
+loConnection.ApiKey = GETENV("OPENAI_KEY")
+loConnection.ModelId = "gpt-4o-mini"  && "gpt-3-turbo"
+```
+
+For OpenAI you specify your API key and optionally a model id. In this case the model ID isn't really necessary because currently `gpt-4o-mini` is the default model.
+
+If I want to run this same example with a local SLM model via Ollama I can do that as well - all I have to do is change the connection. Assuming Ollama is running on my machine, I can change the `Connection` configuration to:
+
+```foxpro
+*** Using Ollama SMLs Locally
+loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OllamaOpenAiConnection")
+loConnection.ModelId = "llama3"    && specify a local model (llama3, phi3.5, mistral etc.)
+```
+
+Local Ollama doesn't require an API key so the only thing you have to provide is the local model you want to run. Even that is optional as the default active model is used.
+
+Running against a local model you'll quickly find out that requests are significantly slower and that results are much more variable. 
+
+For example, `llama3` (Meta's model that has an SLM version) often ignores my request to only return the actual results. For summaries it often refuses to stick to the 4 paragraph limit and gives me a freaking novel instead. `phi3.5` (Microsoft's SLM model) often produces bad translations that miss words. 
+
+The OpenAI LLMs do a much better job at returning results quickly, and producing more consistently accurate results.
+
+#### Generic Chat Completions
+The last two examples showed how to create specific implementation of chat completions with pre-defined prompts and tasks: Text summarization and translation specifically. 
+
+But sometimes it's also useful to just have a generic AI that can provide completely random information. And that's easy to do by simply changing around the way the prompt and system prompt are handled. 
+
+Same idea as the last examples, except in this version we can pass in the prompt directly along with an optional system prompt. 
+
+```foxpro
+LPARAMETERS lcPrompt, lcSystemPrompt
+
+do wwDotNetBridge
+DO markdownParser
+
+LOCAL loBridge as wwDotNetBridge, loCompletions
+loBridge = GetwwDotnetBridge()
+loBridge.LoadAssembly("Westwind.Ai.dll")
+
+lcOpenAiKey = GETENV("OPENAI_KEY")
+
+*** Open AI Connection with gpt-4o-mini
+loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
+loConnection.ApiKey = lcOpenAiKey
+
+IF EMPTY(lcPrompt)
+   lcPrompt = "How do I make an Http call in FoxPro with wwHttp?"
+ENDIF
+IF EMPTY(lcSystemPrompt)
+  lcSystemPrompt = "You are a general purpose, helpful assistant"
+ENDIF  
+
+poCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
+
+loCallback = CREATEOBJECT("OpenAiCallback")
+loCollback.oCompletions = loCompletions
+loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lcSystemPrompt, .F.)
+
+? "Thinking..."
+? "--------------"
+? lcPrompt
+```
+
+Nothing new here, except I'm passing in the `lcPrompt` and optional `lcSystemPrompt` so we can do:
+
+```foxpro
+DO openAICompletions with "Tell me about the history of Southwest Fox"
+```
+
+This time the result will likely be a little different with more information and the interfaces tend to return text as **Markdown**. Notice at the top I `DO MarkdownParser` which was covered in one of the earlier samples. We'll use the Markdown parser to parse the result to HTML and then display the result in a templated HTML template so it looks nice.
+
+As before the results are handled in the Async Callback via the `OpenAiCallback` class:
+
+```foxpro
+DEFINE CLASS OpenAICallback as AsyncCallbackEvents
+
+oCompletions = null
+
+*** Returns the result of the method and the name of the method name
+FUNCTION OnCompleted(lcResult,lcMethod)
+
+IF (This.oCompletions.HasError)
+    ? "Error: " + THIS.oCompletions.ErrorMessage
+    RETURN
+ENDIF
+
+*** Convert to Markdown (MarkdownParser.prg)
+lcHtml = Markdown(lcResult)
+
+? "Done!"
+
+*** Show Web Page with Formatting
+ShowWebPage(lcHtml)
+
+ENDFUNC
+
+* Returns an error message, a .NET Exception and the method name
+FUNCTION OnError(lcMessage,loException,lcMethod)
+? "Error: " + lcMethod,lcMessage
+ENDFUNC
+
+ENDDEFINE
+```
+
+Here's what the result looks like with the result returned in a couple of seconds:
+
+![OpenAi Completions SwFoxHistory](OpenAi-Completions-SwFoxHistory.png)
+
+While it's cool to see this work and come back with a useful result, think hard about whether you need this functionality built into your app. Essentially this is similar to the type of output you get from ChatGPT or CoPilot which frankly might be better options for users for these types of generic queries. Unless you have very specific use cases like the Translation or Summarizing example I showed it's probably best to avoid having generic AI content embedded in your own apps.
 
 #### Image Generation
+Ok the last AI example is a little different in that it creates image output from an input prompt. OpenAI's Dall-E model allows turning text into images.
+
+Here's an example:
 
 ![OpenAI ImageGeneration](OpenAI-ImageGeneration.png)
+
+The results can be pretty cool like the one above, but it might take more than a few tries to arrive at good useful examples. It's also extremely important that you describe your image in great detail, including some directions on what style and coloring the image should use for example.
+
+Without more fanfare here's the code to generate an image:
+
+```foxpro
+LPARAMETERS lcPrompt, lcImageFile
+
+do wwDotNetBridge
+DO markdownParser
+
+LOCAL loBridge as wwDotNetBridge
+loBridge = GetwwDotnetBridge()
+loBridge.LoadAssembly("Westwind.Ai.dll")
+
+lcOpenAiKey = GETENV("OPENAI_KEY")
+
+loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
+loConnection.ApiKey = lcOpenAiKey
+loConnection.ModelId = "dall-e-3"
+loConnection.OperationMode = 1  && AiOperationModes.ImageGeneration=1
+
+IF EMPTY(lcPrompt)
+   lcPrompt = "A Fox that is dressed as a grungy punk rocker, " +;
+              "rocking out agressively on an electric guitar. " + ;
+              "Use goldenrod colors on a black background in classic poster style format."	 
+ENDIF
+
+loPrompt = loBridge.CreateInstance("Westwind.AI.Images.ImagePrompt")
+loPrompt.Prompt = lcPrompt
+
+loImageGen = loBridge.CreateInstance("Westwind.AI.Images.OpenAiImageGeneration", loConnection)
+
+loEventHandler = CREATEOBJECT("OpenAICallback")
+
+*** Pass these so they stay alive and can be accessed in the event handler
+loEventHandler.oPrompt = loPrompt
+loEventHandler.oImageGen = loImageGen
+
+*** Here we need to match the signature EXACTLY which means ACTUAL enum object
+enumOutputFormat = loBridge.GetEnumValue("Westind.AI.Images.ImageGenerationOutputFormats","Url")
+* enumOutputFormat = loBridge.GetEnumValue("Westind.AI.Images.ImageGenerationOutputFormats","Base64")
+loBridge.InvokeTaskMethodAsync(loEventHandler, loImageGen, "Generate", loPrompt, .F., enumOutputFormat) 
+
+? "Generating Image..."
+? "--------------"
+? lcPrompt
+
+DEFINE CLASS OpenAICallback as AsyncCallbackEvents
+
+oPrompt = null
+oImageGen = null
+
+*** Returns the result of the method and the name of the method name
+FUNCTION OnCompleted(llResult,lcMethod)
+
+IF (!llResult)
+    ? "Error: " + this.oImageGen.cErrorMsg
+    RETURN
+ENDIF
+
+lcUrl = this.oPrompt.FirstImageUrl
+
+? "*** Image URL returned by API:"
+? lcUrl
+
+*** Open URL in browser
+GoUrl(lcUrl)
+
+*** Download the image
+lcImageFile = "d:\temp\imagegen.png"
+
+*** Download the file from URL
+LOCAL loBridge 
+loBridge = GetwwDotnetBridge()
+loWebClient = loBridge.CreateInstance("System.Net.WebClient")
+loWebClient.DownloadFile(lcUrl, lcImageFile)
+
+*** Download file with wwHttp if you have it instead
+*!*	DO wwhttp
+*!*	loHttp = CREATEOBJECT("wwHttp")
+*!*	loHttp.Get(lcUrl,  lcImageFile)
+
+GoUrl(lcImageFile)
+? "Done!"
+ENDFUNC
+
+* Returns an error message, a .NET Exception and the method name
+FUNCTION OnError(lcMessage,loException,lcMethod)
+? "Error: " + lcMethod,lcMessage
+ENDFUNC
+
+ENDDEFINE
+```
+
+
+ImageGeneration uses an `ImagePrompt` class that is used to pass in parameters and also retrieve results. You pass in the `Prompt` property, and when the image generation is complete you get back an array of image image URLs or base64 binary representations of the image. You specify which mode is used via the `ImageGenerationsOutputFormats` enum which is passed as the last parameter into the `Generate()` async method:
+
+```foxpro
+*** Here we need to match the signature EXACTLY which means ACTUAL enum object
+enumOutputFormat = loBridge.GetEnumValue("Westind.AI.Images.ImageGenerationOutputFormats","Url")
+* enumOutputFormat = loBridge.GetEnumValue("Westind.AI.Images.ImageGenerationOutputFormats","Base64")
+loBridge.InvokeTaskMethodAsync(loEventHandler, loImageGen, "Generate", loPrompt, .F.,enumOutputFormat)
+```
+
+In the example above I returned the URL so the code displays the URL using `GoUrl()` (from `wwUtils.prg`)  to display the image in the browser. For bonus points the result handler also downloads the image using .NET's `System.Net.WebClient` and storing it in a file. Alternately you can also use `wwHttp` if you have it using FoxPro only code.
+
+For returning base64, we can ask for the image to be returned as base64, which is an HTML style image embedding url (`data:image/png;base64,<largeBase64Text>`) , which can be parsed to binary or by using the convenient `loPrompt.SaveImageFromBase64(lcFileToSaveTo)` provided by the .NET library. Both Url and base64 work, but base64 is slower as it has to immediately download the image, while URL can just display the URL. URLs are stored only for a limited time on OpenAI, so you'll want to download the URLs if you want to keep any images as soon as you know you want to hang on to them.
+
+There are two programs that demonstrate both URL and base64 downloads:
+
+* `OpenAiImage.prg` (Url)
+* `OpenAiImageBase64.prg`
+
+#### AI Summary
+Using this AI library makes short work of integrating AI functionality into applications. What I've shown are kind of boring but practical applications of AI functionality which is probably a good use of this technology. Finding more innovative usage for this tech is not easy because it's really hard to predict exactly what the result from an AI query look like. As you've seen even with these simple examples, results can vary wildly between runs **even with the same exact data**.  So, play around with the features, but be mindful of how reliable the tools are for the job that you need it to actually perform before jumping in over your head.
 
 ### Create a .NET Component and call it from FoxPro
 

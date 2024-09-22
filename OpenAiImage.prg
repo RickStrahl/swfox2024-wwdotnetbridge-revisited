@@ -1,13 +1,12 @@
 LPARAMETERS lcPrompt, lcImageFile
 
 CLEAR
-DO wwutils
 do wwDotNetBridge
 DO markdownParser
 
-PUBLIC   loBridge as wwDotNetBridge
+LOCAL loBridge as wwDotNetBridge
 loBridge = GetwwDotnetBridge()
-loBridge.LoadAssembly("Westwind.Ai.dll")
+? loBridge.LoadAssembly("Westwind.Ai.dll")
 
 lcOpenAiKey = GETENV("OPENAI_KEY")
 
@@ -18,8 +17,8 @@ loConnection.ModelId = "dall-e-3"
 loConnection.OperationMode = 1  && AiOperationModes.ImageGeneration=1
 
 IF EMPTY(lcPrompt)
-   lcPrompt = "A Fox that is dressed as a grungy punk rocker, rocking out agressively on a Bass guitar." + ;
-              "Use golden rod colors on a black background in classic poster style format"	 
+   lcPrompt = "A Fox that is dressed as a grungy punk rocker, rocking out agressively on an electric guitar." + ;
+              "Use goldenrod colors on a black background in classic poster style format"	 
 ENDIF
 
 
@@ -36,7 +35,8 @@ loEventHandler.oImageGen = loImageGen
 
 *** Here we need to match the signature EXACTLY which means ACTUAL enum object
 enumOutputFormat = loBridge.GetEnumValue("Westind.AI.Images.ImageGenerationOutputFormats","Url")
-loBridge.InvokeTaskMethodAsync(loEventHandler, loImageGen, "Generate", loPrompt, .F., enumOutputFormat) && ImageGenerationOutputFormats.Url
+* enumOutputFormat = loBridge.GetEnumValue("Westind.AI.Images.ImageGenerationOutputFormats","Base64")
+loBridge.InvokeTaskMethodAsync(loEventHandler, loImageGen, "Generate", loPrompt, .F., enumOutputFormat) 
 
 ? "*** Program completes. Async call continues in background."
 ?
@@ -62,6 +62,8 @@ IF (!llResult)
 ENDIF
 
 lcUrl = this.oPrompt.FirstImageUrl
+
+? "*** Image URL returned by API:"
 ? lcUrl
 ?
 
@@ -69,9 +71,17 @@ GoUrl(lcUrl)
 
 *** Download the image
 lcImageFile = "d:\temp\imagegen.png"
-DO wwhttp
-loHttp = CREATEOBJECT("wwHttp")
-loHttp.Get(lcUrl,  lcImageFile)
+
+*** Download the file
+LOCAL loBridge 
+loBridge = GetwwDotnetBridge()
+loWebClient = loBridge.CreateInstance("System.Net.WebClient")
+loWebClient.DownloadFile(lcUrl, lcImageFile)
+
+*** Download file with wwHttp
+*!*	DO wwhttp
+*!*	loHttp = CREATEOBJECT("wwHttp")
+*!*	loHttp.Get(lcUrl,  lcImageFile)
 
 GoUrl(lcImageFile)
 

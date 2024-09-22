@@ -5,12 +5,13 @@ DO wwutils
 do wwDotNetBridge
 DO markdownParser
 
-PUBLIC   loBridge as wwDotNetBridge, poCompletions
+LOCAL loBridge as wwDotNetBridge, loCompletions
 loBridge = GetwwDotnetBridge()
 loBridge.LoadAssembly("Westwind.Ai.dll")
 
 lcOpenAiKey = GETENV("OPENAI_KEY")
 
+*** Open AI Connection with gpt-4o-mini
 loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
 ? loBridge.cErrorMsg
 loConnection.ApiKey = lcOpenAiKey
@@ -21,8 +22,6 @@ loConnection.ApiKey = lcOpenAiKey
 *!*	loConnection.ModelId = "llama3"
 *loConnection.ModelId = "phi3.5"
 
-
-
 IF EMPTY(lcPrompt)
    lcPrompt = "How do I make an Http call in FoxPro with wwHttp?"
 ENDIF
@@ -30,10 +29,11 @@ IF EMPTY(lcSystemPrompt)
   lcSystemPrompt = "You are a helpful assistant"
 ENDIF  
 
-poCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
+loCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
 
 loCallback = CREATEOBJECT("OpenAiCallback")
-loBridge.InvokeTaskMethodAsync(loCallback, poCompletions,"Complete",lcPrompt, lcSystemPrompt, .F.)
+loCallback.oCompletions = loCompletions
+loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lcSystemPrompt, .F.)
 
 ? "*** Program completes. Async call continues in background."
 ?
@@ -47,17 +47,17 @@ RETURN
 
 DEFINE CLASS OpenAICallback as AsyncCallbackEvents
 
+oCompletions = null
+
 *** Returns the result of the method and the name of the method name
 FUNCTION OnCompleted(lcResult,lcMethod)
 
-IF (poCompletions.HasError)
-    ? "Error: " + poCompletions.ErrorMessage
+IF (This.oCompletions.HasError)
+    ? "Error: " + THIS.oCompletions.ErrorMessage
     RETURN
 ENDIF
 
 lcHtml = Markdown(lcResult)
-
-_cliptext = lcHtml
 
 ? "Done!"
 ShowWebPage(lcHtml)
