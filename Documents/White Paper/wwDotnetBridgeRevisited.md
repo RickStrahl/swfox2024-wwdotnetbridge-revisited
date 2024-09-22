@@ -2993,6 +2993,23 @@ There are two programs that demonstrate both URL and base64 downloads:
 * `OpenAiImage.prg` (Url)
 * `OpenAiImageBase64.prg`
 
+#### How do I use this?
+The features I've described here I've actually integrated in one of my tools Markdown Monster. Markdown Monster has support for Text Summaries, Translation, Grammar Checking and Image AI generation.
+
+![OpenAI MarkdownMonster AIOperations](OpenAI-MarkdownMonster-AIOperations.png)
+
+Here's an example of the AI based Grammar check of a text selection:
+
+![OpenAI MarkdownMonster GrammarCheck](OpenAI-MarkdownMonster-GrammarCheck.png)
+
+Similar specialized dialogs exist for translations, and text summaries that can be embedded or replace existing text.
+
+Image generation is integrated with an interactive editor and image manager that can be used to capture and embed images:
+
+![OpenAI MarkdownMonster ImageGeneration](OpenAI-MarkdownMonster-ImageGeneration.png)
+
+All of these features are implemented using the same library I've shown in the samples above, so these examples are real world integrations that are in production in a commercial application.
+
 #### AI Summary
 Using this AI library makes short work of integrating AI functionality into applications. What I've shown are kind of boring but practical applications of AI functionality which is probably a good use of this technology. Finding more innovative usage for this tech is not easy because it's really hard to predict exactly what the result from an AI query look like. As you've seen even with these simple examples, results can vary wildly between runs **even with the same exact data**.  So, play around with the features, but be mindful of how reliable the tools are for the job that you need it to actually perform before jumping in over your head.
 
