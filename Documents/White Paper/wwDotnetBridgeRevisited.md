@@ -3268,58 +3268,71 @@ As a general rule these days for almost every FoxPro application I create one ma
 
 As a bonus this allows you to get your feet wet with .NET code. Using class library extensions like this is a great way to create small bits of .NET code without having to go full bore of a full conversion. You can gain external functionality that otherwise wouldn't be there while still maintaining the ability to easily edit and recompile the code for changes.
 
-It's a win win scenario.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ideally you
-
-
-
 ## Best Practices
 
-* Configuration 
-    * Allow assemblies to load from Network
-    * Version Conflicts and Assembly Redirects
-* Build your own Components
-    * If .NET Logic is even remotely complexPrefer to build a .NET Component and call from FoxProrather than try complex wwDotnetBridge translations
-    * .NET is now fairly low Impact
-        * Build from the Command Line
-        * Single install .NET SDK lets you build, run, publish
-        * You can use any editor
-* Tooling
-    * You can use whatever Editor you like
-    * Visual Studio is not required, but still the best .NET Environmentfor full featured .NET work.
-    * For building small components a Text Editor is all you need
+### .NET Dependency Version Management
+One issue that you can run into and that's somewhat important is one of versioning of depdencies. When you use .NET components you may end up using dependencies that are used by multiple components with each version depending on a different version. 
 
+.NET - and especially .NET framework - is determinisitic about versions it expects so when a component is bind to a component of a certain type by default it expects that specific version to be present. If it's not you may end up getting assembly load errors, that complain that one or another assembly could not resolve its dependencies.
 
-### Application Configuration Files
+This situation is better in .NET Core which automatically rolls up dependencies to the highest version, but in .NET Framework you have to do this manually via configuration called Assembly Redirects.
 
-* Application Configuration for .NET
-    * Same folder as EXE – your app or Fox IDE:    
-      Vfp9.exe.config   or   YourApp.exe.config
-* Specifies:
-    * Runtime Version (optional – acts as a minimum version check)
-    * Network Behavior:  enable loadFromRemoteSources
-    * Assembly Redirects
+Assembly redirects let you specify a minimum version and desired higher version. By having a redirect all components requesting a specific versions are then 'redirected' to the higher version and so all can share the same version safely.
 
-### Version Conflicts: Assembly Redirects
+Assembly redirects are set in `.config` files. For FoxPro that means:
 
-### .NET Calling: Don't Overcomplicate Things
+* YourApp.exe.config
+* VFP9.exe.config
 
-## Create your own .NET Components
+and here is what Assembly Redirects look like if they are needed:
 
+```xml
+<?xml version="1.0"?>
+<configuration>
+  <startup>   
+	<supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.8" />	
+  </startup>
+  <runtime>
+    <loadFromRemoteSources enabled="true"/>
+      
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+            <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-13.0.0.0" newVersion="13.0.0.0" />
+            </dependentAssembly>
+            
+            <dependentAssembly>
+            <assemblyIdentity name="System.Runtime.CompilerServices.Unsafe" publicKeyToken="b03f5f7f11d50a3a" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-6.0.0.0" newVersion="6.0.0.0" />
+            </dependentAssembly>
+            <dependentAssembly>
+            <assemblyIdentity name="System.Memory" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-4.1.0.0" newVersion="4.0.1.2" />
+            </dependentAssembly>
+            <dependentAssembly>
+            <assemblyIdentity name="System.Buffers" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
+            <bindingRedirect oldVersion="0.0.0.0-4.1.0.0" newVersion="4.0.3.0" />
+       </dependentAssembly>
+     </assemblyBinding>     
+  </runtime>
+  
+</configuration>  
+```
+
+If you're using a single component you're unlikely to run into issues, but for all these demos I'm doing here, there are many different versions of components used and so a conflict is more likely and we're seeing it here.
+
+`NewtonSoft.Json` is a very widely used JSON parser in .NET so it's often involved in dependency management fix ups. 
+
+The various `System` assemblies are typically caused by components that are using `netstandard2.0` instead of explicitly targeting .NET Framework (`net472` etc.). If there are multiple components that are using `netstandard2.0` it's very likely there will be a version conflict.
+
+So how do you find these problems? When you get an error with a specific assembly you are loading it will typically tell you which dependency is a problem. You can then use a disassembly like ILSpy to check what version is expected and fix the version.
+ 
+> ##### @icon-warning Assembly Versions is what matters for Assembly Redirects
+> It's important to note that the versions in the assembly bindings are **Assembly Versions** *not File Versions*. You can find assembly versions in tools like ILSpy by looking at each assembly and looking at the metadata for the assembly. **Don't rely on the File Properties window in Explorer which shows the File version**.
+>
+> ![IL Spy Version Number](ILSpyVersionNumber.png)
+
+Assembly redirects can be a pain to track down, but thankfully they are relatively rare.
 
 ## Summary
 
