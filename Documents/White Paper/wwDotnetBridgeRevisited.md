@@ -3334,12 +3334,36 @@ So how do you find these problems? When you get an error with a specific assembl
 
 Assembly redirects can be a pain to track down, but thankfully they are relatively rare.
 
-## Summary
+### Keep it simple: Use .NET When wwDotnetBridge is a lot of Effort
+I want to stress once again, to make sure you don't make things too complicated with trying at all costs to keep code purely in FoxPro. Yes, wwDotnetBridge makes it possible to access most .NET code directly, but trust me when I say that it's much easier to create code with proper Intellisense and the ability to directly access the entire language feature set **directly** rather than having to make indirect calls from FoxPro.
 
-* Lots of Cool .NET Stuff available
-    * Many Windows Features are exposed through .NET
-    * Many open source and 3rd parties available
+As a bonus by doing this you can isolate the .NET Wrappers in a way so that they are FoxPro friendly so that you can directly access and use the .NET component from FoxPro without a wrapper. 
+
+You can create **many components in a single .NET project**, and .NET assemblies tend to be tiny and very efficient to load. Since you're already going to call into .NET code creating a small wrapper that's FoxPro accessible is going to have virtually no overhead - in fact it'll likely be much more efficient than making indirect calls using wwDotnetBridge.
+
+Take advantage of .NET.
+
+### Get your Feet Wet with .NET
+Using components is one of the easiest ways to get your feet wet with some .NET code without having to jump into building an entire application. You can slice off some business functionality into .NET or even just those pieces that you can't directly call from FoxPro otherwise.
+
+Many of the success stories of people that have migrated have come from starting very small and getting a feel for it with a few small features and then expanding outwards from there. wwDotnetBridge makes it entirely feasible to build a hybrid application that works both with FoxPro and .NET. 
+
+As an example, West Wind Html Help Builder which is a very old FoxPro application integrates heavily with .NET. There are entire sub-components that are written in .NET including the Class and Database Importer, the CHM output generation engine, and large parts of the editor interface. There are even a number of UI Dialogs that are .NET based due to odd behaviors of FoxPro dialogs. 
+
+If this sounds like I'm shilling for .NET - in a way I am, but I do so because it has worked extremely well for me. .NET is the easiest platform that you can directly interface with from FoxPro including for desktop applications. There are many other toolsets like NodeJs, Phython, Java etc. that are popular and while I think they are equally as viable as standalone platforms, they don't have anything like .NET in terms of ease of integration with FoxPro or the vast array of Windows system integration. .NET is really the only high level tooling platform that can easily integrate with FoxPro via easy to use COM Interop. 
+
+So, take advantage of this easy integration, while gaining an enormous window of functionality that lets you continue to use FoxPro...
+
+## Summary
+Alright that oughta do it! :smile:
+
+Let's do a high level sum-up:
+
+* Lots of cool .NET features available to integrate into FoxPro
+    * Many Windows System features are exposed through .NET
+    * Thousands of open source and 3rd parties are available
     * With wwDotnetBridge you can access most of it!
+    
 * wwDotnetBridge makes it EASY!
     * Call any .NET components without registration
     * Opens up most of .NET to FoxPro
@@ -3347,6 +3371,7 @@ Assembly redirects can be a pain to track down, but thankfully they are relative
     *Generics, Value Types, Collections, Enums, Static members etc.*
     * Helpers for types that suck in FoxPro  
     *ComArray, ComValue*
+    
 * Create Wrappers for Complex Code
     * Easier to create .NET code to interface with complex APIs
     * Make the wrapper FoxPro friendly
