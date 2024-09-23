@@ -13,7 +13,7 @@ dontStripH1Header: false
 ---
 # Revisiting wwDotnetBridge and .NET Interop from FoxPro in the Modern Age of .NET
 
-![Bridge](Bridge.jpg)
+![Bridge](Bridge.jpg) 
 
 <div style="margin: 1em 0 3em 0; font-size: 0.8em;">
 
