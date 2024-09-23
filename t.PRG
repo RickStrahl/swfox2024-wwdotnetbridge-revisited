@@ -1,9 +1,19 @@
 CLEAR
-DO _startup.prg
+*DO _startup.prg
 
 DO wwDotnetBRidge
 loBridge = GetwwDotnetBridge()
 ? loBridge.LoadAssembly("foxInterop.dll")
+
+loCol =  loBridge.GetLoadedAssemblies()
+FOR EACH loItem IN col 
+   ? loItem.Name
+   ? loItem.Location
+   ? loItem.FullName
+   ?
+ENDFOR
+
+RETURN
 
 loPerson = loBridge.CreateInstance("FoxInterop.Person")
 ? loPerson.Name

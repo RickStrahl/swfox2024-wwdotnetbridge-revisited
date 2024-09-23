@@ -5,7 +5,7 @@ DO wwDotnetBridge
 SET PROCEDURE TO wwUtils additive
 SET PROCEDURE TO SpellChecker ADDITIVE
 
-#IF .F.
+#IF .T.
 *** RAW API Access
 
 

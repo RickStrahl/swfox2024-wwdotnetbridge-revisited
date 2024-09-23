@@ -7,7 +7,6 @@ SET PROCEDURE TO wwDotnetBridge ADDITIVE
 
 #IF IS_WESTWIND
 	#DEFINE WWC_CLR_HOSTDLL wwipstuff.dll 
-	
 
 	*** Other dependencies
 	* .NET Runtime 4.0+ or .NET Core 5+
@@ -960,6 +959,31 @@ ENDFUNC
 
 
 ************************************************************************
+*  ComArrayToCollection
+****************************************
+***  Function: Converts a ComArray to a FoxPro collection
+***      Pass: loComArray
+***    Return: Collection. If null returns empty collection
+************************************************************************
+FUNCTION ComArrayToCollection(loComArray)
+LOCAL loCol, lnX
+
+loCol = CREATEOBJECT("Collection")
+IF VARTYPE(loComArray) # "O"
+   RETURN loCol
+ENDIF
+
+FOR lnX = 0 TO loComArray.Count -1
+   loCol.Add(loComArray.Item(lnX))
+ENDFOR
+
+RETURN loCol
+ENDFUNC
+*   ComArrayToCollection
+
+
+
+************************************************************************
 *  CreateArrayOnInstnace
 ****************************************
 ***  Function: Creates an array of a given type and size on the specified
@@ -1079,11 +1103,7 @@ ENDFUNC
 ************************************************************************
 FUNCTION GetTypeName(lvValue)
 loType = THIS.GetType(lvValue)
-IF VARTYPE(loType) == "O"
-	RETURN this.GetProperty(loType,"FullName")
-ELSE
-    RETURN "null"
-ENDIF	
+RETURN this.InvokeMethod(loType,"ToString")
 ENDFUNC
 *   GetTypeName
 
@@ -1100,6 +1120,22 @@ RETURN this.InvokeMethod(this.oDotNetBridge,"GetTypeFromName",lcTypeName)
 ENDFUNC
 *   GetTypeFromName
 
+************************************************************************
+*  GetLoadedAssemblies
+****************************************
+***  Function: Get loaded assemblies
+***    Assume:
+***      Pass:
+***    Return: Collection of assemblies
+***            Name, Location, FullName
+************************************************************************
+FUNCTION GetLoadedAssemblies()
+
+loAssemblies = this.InvokeMethod(this.oDotnetBridge,"GetLoadedAssemblies")
+RETURN THIS.ComArrayToCollection(loAssemblies)
+RETURN
+ENDFUNC
+*   GetLoadedAssemblies
 
 ************************************************************************
 *  SubscribeToEvents
@@ -1666,7 +1702,7 @@ DEFINE CLASS AsyncCallbackEvents AS Custom
 Class AsyncCallbackEvents
 
 *:Description:
-Create a subclass of this class and pass to InvokeMethodAsync OR InvokeTaskMethodAsync  
+Create a subclass of this class and pass to InvokeMethodAsync
 as a callback object. When the method call completes or fails
 the OnCompleted or OnError methods are fired.
 

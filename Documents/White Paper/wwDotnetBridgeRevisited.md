@@ -1,3 +1,16 @@
+---
+title: 'wwDotnetBridge Revisited: An updated look at FoxPro .NET Interop'
+featuredImageUrl: https://west-wind.com/wconnect/weblog/imageContent/2024/White-Paper/LoadFlow.gif
+abstract: In this very long white paper for the Southwest Fox conference, I discuss the basics of wwDotnetBridge and then demonstrate a variety of functionality with 10 examples. We'll see basic usage, how to wrap classes in FoxPro and .NET, how to use a variety of .NET 3rd party libraries, how to handle .NET events and how to make Task based async calls.
+keywords: wwDotnetBridge
+categories: FoxPro
+weblogName: Web Connection Weblog
+postId: 57032
+postDate: 2024-09-22T21:34:21.4933426-07:00
+postStatus: publish
+dontInferFeaturedImage: false
+dontStripH1Header: false
+---
 # Revisiting wwDotnetBridge and .NET Interop from FoxPro in the Modern Age of .NET
 
 <div style="margin: 1em 0 3em 0; font-size: 0.8em;">
