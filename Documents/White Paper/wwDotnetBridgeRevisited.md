@@ -30,7 +30,7 @@ dontStripH1Header: false
 
 More importantly though, .NET has garnered a huge eco system of open source and commercial libraries and components that provide just about any kind of functionality and integration you can think of. 
 
-All of this is good news for FoxPro developers, as you can take advantage of most of that .NET functionality to extend your own FoxPro applications with rich functionality beyond FoxPro's native features using either basic COM interop (very limited) or more usefully with the open source [wwDotnetBridge library](https://github.com/RickStrahl/wwDotnetBridge).
+All of this is good news for FoxPro developers, as you can take advantage of most of that .NET functionality to **extend your own FoxPro applications** with rich functionality beyond FoxPro's native features using either basic COM interop (very limited) or more usefully with the open source [wwDotnetBridge library](https://github.com/RickStrahl/wwDotnetBridge).
 
 > In this very long White Paper, I'll introduce wwDotnetBridge and some of the things that you probably need to know about working with .NET before diving into 10 separate examples along with some background on each, that each demonstrate different features of wwDotnetBridge. Most of the size is in these examples as they provide some background and in some cases quite a bit of code and you can skip those that don't interest you.
 
@@ -55,13 +55,32 @@ The good news is that most components today still use multi-targeting and suppor
 > #### @icon-lightbulb Stick to .NET Framework
 > Bottom Line: If at all possible aim for using .NET Framework if you're calling .NET code from FoxPro. Only rely on .NET Core components if there is no alternative in .NET Framework available.
 
+## Why .NET for FoxPro?
+.NET is a Microsoft platform and for better or for worse, it's the only platform that has good Windows support for desktop applications and that can be integrated relatively easily with Visual FoxPro, mainly because it works with COM. 
+
+FoxPro is very old technology, with the last released version now more than 15 years out of date, so in order to keep FoxPro applications up to date with current functionality **some technology** is needed to extend FoxPro beyond it's old feature set. The original extension technology was COM, but COM has died a slow death right alongside FoxPro, especially for high level languages that use `IDispatch` interface as FoxPro does. You'll be hard pressed to find a 'new' COM component that exposes business or system functionality these days. While COM is still heavily used internally in Windows with C++ code, most of the system functionality exposed to developers these days is exposed via .NET.
+
+Further, these days it's fairly easy to get started building your own .NET components, which facilitates the ability to access more complex .NET code **using your own .NET code** that acts as a front end for the more complex .NET code.
+
+This opens up many avenues of extensibility, both in terms of .NET component feature availability to your application, but also as an avenue for extensibility of your application using an alternate technology. What's nice about using a component based interface like this is that you ease into building functionality selectively in .NET and expose it from FoxPro. It's a great way to experiment with .NET for real world scenarios starting with small components, to potentially larger integrations down the road or even entire switching to a .NET based application eventually with the ability to use the code you've built along the way.
+
+Because .NET is now multi-platform and can run desktop, Web, API, Phone and IOT based applications, any components you build also can be used in all of those environments (assuming they are platform agnostic), so any investments you make in .NET components can be re-used in other .NET based interfaces or even other .NET integrations. So today you might be building an extension interface for your FoxPro desktop application, but tomorrow you may be using that same extension in a .NET Web API application. 
+
+In short, for FoxPro developers .NET offers a path to extensibility via COM integration, that lets you take advantage of most of .NET's features with minimal effort. 
+
+Let's take a look at what that looks like.
+
 ## What is wwDotnetBridge?
 wwDotnetBridge is an **open source, MIT licensed** FoxPro library, that allows you to load and call most .NET components from FoxPro. It provides registrationless activation of .NET Components and helpers that facilitate accessing features that native COM Interop does not support.
 
-The key features are:
+.NET has built-in COM Interop support which allows you to instantiate and then invoke .NET objects via COM. Unfortunately this mechanism is very limited due to the requirement that components are registered in a special way to both COM and .NET, and that components have to be explicitly marked. Effectively this means you can only instantiate COM components that you have created your self.
+
+To work around this wwDotnetBridge provides many improvements that work around the limitations of native .NET COM Interop, while still using COM Interop for the inter-process communication. Everything that works with native COM Interop also works with wwDotnetBridge - it's the same technology after all -  but you get many more support features to work around the limitations.
+
+The key features of wwDotnetBridge are:
 
 * **Registrationless access to most .NET Components**  
-Unlike native COM Interop, you can instantiate and access .NET Components and features, without requiring those classes to be registered as COM objects. Objects are instantiated from within .NET, so you can access most .NET components by directly loading them from their DLL assembly. Both .NET Framework (`wwDotnetBridge`) and .NET Core (`wwDotnetCoreBridge`) are supported.
+Unlike native COM Interop, you can instantiate and access .NET Components and static classes, without requiring those classes to be registered as COM objects. Objects are instantiated from within .NET, so you can access most .NET components by directly loading them from their DLL assembly. Both .NET Framework (`wwDotnetBridge`) and .NET Core (`wwDotnetCoreBridge`) are supported.
 
 * **Instantiates and Interacts with .NET Objects via COM from within .NET**  
 wwDotnetBridge is a .NET based component that **runs inside of .NET** and acts as an intermediary for activation, invocation and access operations. A key feature is that it creates .NET instances from within .NET and returns those references using COM Interop. Once loaded you can use all features that COM supports directly: Property access and method calls etc. *as long the members accessed use types that are supported by COM*.
