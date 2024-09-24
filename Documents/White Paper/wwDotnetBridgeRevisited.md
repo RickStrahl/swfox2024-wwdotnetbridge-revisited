@@ -18,7 +18,7 @@ dontStripH1Header: false
 <div style="margin: 1em 0 3em 0; font-size: 0.8em;">
 
 *by **Rick Strahl***  
-*prepared for **Southwest Fox**, 2024*  
+*prepared for **Southwest Fox 2024***  
 
 [Session Example Code](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited) on GitHub  
 [Session Slides](https://github.com/RickStrahl/swfox2024-wwdotnetbridge-revisited/raw/master/Documents/Strahl-swFox2024-wwDotnetBridge-Revisited.pptx)   
