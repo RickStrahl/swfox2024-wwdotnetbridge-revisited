@@ -19,6 +19,7 @@ loConnection.ModelId = "gpt-4o-mini"
 *!*	loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OllamaOpenAiConnection")
 *!*	? loBridge.cErrorMsg
 *!*	loConnection.ModelId = "llama3"
+*!*	* loConnection.ModelId = "phi3.5"
 
 
 IF EMPTY(lcTranslateText)
@@ -42,7 +43,7 @@ loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lc
 
 ? "*** Program completes. Async call continues in background."
 ?
-? "Translating from English..."
+? "Translating from English... (" + loConnection.ModelId + ")"
 ? "--------------"
 ? lcTranslateText
 ?

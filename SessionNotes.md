@@ -19,11 +19,16 @@ Some Markdown text goes here.
 
 > How did you go bankrupt? Two ways - Gradually, then suddenly
 
+
 ### Questions for Generic Completions
 
 > Tell me about the history of Southwest Fox
 
 > Tell me about the history of FoxPro
+
+> Tell me how to implement a quick sort in C#
+
+
 
 ## FoxInterop Walk Through
 

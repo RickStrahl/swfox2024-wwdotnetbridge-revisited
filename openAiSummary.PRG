@@ -15,9 +15,9 @@ loConnection.ApiKey = GETENV("OPENAI_KEY")
 loConnection.ModelId = "gpt-4o-mini"  && "gpt-3-turbo"
 
 *** Using Ollama SMLs Locally
-loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OllamaOpenAiConnection")
-? loBridge.cErrorMsg
-loConnection.ModelId = "llama3"
+*!*	loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OllamaOpenAiConnection")
+*!*	? loBridge.cErrorMsg
+*!*	loConnection.ModelId = "llama3"
 
 
 IF EMPTY(lcTextToSummarize)
@@ -38,7 +38,7 @@ loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lc
 
 ? "*** Program completes. Async call continues in background."
 ?
-? "Summarizing..."
+? "Summarizing... (" + loConnection.ModelId + ")"
 ?
 
 RETURN

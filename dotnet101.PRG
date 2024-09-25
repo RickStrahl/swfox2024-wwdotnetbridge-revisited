@@ -1,6 +1,9 @@
 CLEAR
 DO _STARTUP.prg
 
+
+SET STEP ON 
+
 do wwDotNetBridge                 && Load library
 LOCAL loBridge as wwDotNetBridge  && for Intellisense
 loBridge = GetwwDotnetBridge()    && instance

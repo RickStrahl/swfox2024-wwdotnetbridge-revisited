@@ -26,7 +26,7 @@ dontStripH1Header: false
 [wwDotnetBridge Docs](https://webconnection.west-wind.com/docs/_24n1cfw3a.htm)
 </div>
 
-.NET has proliferated as the dominant Windows development environment, both for application development using a variety of different Windows-specific platforms and the high-level interface chosen by Microsoft  to expose Windows system functionality. .NET based APIs have mostly replaced COM as the high level Windows system interface that exposes Interop features besides native C++.
+.NET has proliferated as the dominant Windows development environment, both for Windows application development using a variety of different Windows-specific platforms and as the high-level API surface chosen by Microsoft to expose Windows system functionality besides low-level, native C++.
 
 More importantly though, .NET has garnered a huge eco system of open source and commercial libraries and components that provide just about any kind of functionality and integration you can think of. 
 

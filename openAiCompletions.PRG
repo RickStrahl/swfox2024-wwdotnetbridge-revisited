@@ -37,7 +37,7 @@ loBridge.InvokeTaskMethodAsync(loCallback, loCompletions,"Complete",lcPrompt, lc
 
 ? "*** Program completes. Async call continues in background."
 ?
-? "Thinking..."
+? "Thinking... (" + loConnection.ModelId + ")"
 ? "--------------"
 ? lcPrompt
 ?
