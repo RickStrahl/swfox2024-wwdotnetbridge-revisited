@@ -32,6 +32,45 @@ Some Markdown text goes here.
 
 ## FoxInterop Walk Through
 
+### Initial Person Class
+
+```csharp
+public class Person
+{
+   public string Name { get; set; } =  "Jane Doe";
+   public string Company { get; set; } = "Acme Inc.";
+   public DateTime Entered { get; set; } = DateTime.UtcNow;
+   public Address Address { get; set; } = new Address();
+
+   public override string ToString() 
+   {
+       return $"{Name} ({Company})\n{Address}";
+   }
+}
+
+public class Address
+{
+   public string Street { get; set; }  =  "123 Main St.";
+   public string City { get; set; }    =  "Anytown";
+   public string State { get; set; }   =  "CA";
+   public string PostalCode { get; set; }  =  "12345";
+
+   public override string ToString() 
+   {
+       return $"{Street}, {City}, {State} {PostalCode}";
+   }
+}
+
+```
+
+### Add alternate path
+
+```xml
+<OutputPath>..\..\bin</OutputPath>
+<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>	
+```
+
+
 ### Add Alternate Addresses Property to C#
 
 ```cs

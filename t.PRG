@@ -3,17 +3,7 @@ CLEAR
 
 DO wwDotnetBRidge
 loBridge = GetwwDotnetBridge()
-? loBridge.LoadAssembly("foxInterop.dll")
-
-loCol =  loBridge.GetLoadedAssemblies()
-FOR EACH loItem IN col 
-   ? loItem.Name
-   ? loItem.Location
-   ? loItem.FullName
-   ?
-ENDFOR
-
-RETURN
+loBridge.LoadAssembly("foxInterop.dll")
 
 loPerson = loBridge.CreateInstance("FoxInterop.Person")
 ? loPerson.Name
@@ -21,18 +11,20 @@ loPerson = loBridge.CreateInstance("FoxInterop.Person")
 ? loPerson.ToString()
 ?
 
-loAddresses = loBridge.GetProperty(loPerson, "AlternateAddresses")
+*** ComArray Object returned
+*!*	loAddresses = loBridge.GetProperty(loPerson, "AlternateAddresses")
 
-loAddress = loAddresses.CreateItem()
-loAddress.Street = "3123123 Nowhere Lane"
-loAddress.City = "Nowhere"
+*!*	* loAddress = loBridge.CreateInstance("FoxInterop.Address")
+*!*	loAddress = loAddresses.CreateItem()
+*!*	loAddress.Street = "3123123 Nowhere Lane"
+*!*	loAddress.City = "Nowhere"
 
-loAddresses.Add(loAddress)
+*!*	loAddresses.Add(loAddress)
 
-loAddress = loAddresses.CreateItem()
-loAddress.Street = "3123123 Somewhere Lane"
-loAddress.City = "Somewhere"
+*!*	loAddress = loAddresses.CreateItem()
+*!*	loAddress.Street = "3123123 Somewhere Lane"
+*!*	loAddress.City = "Somewhere"
 
-loAddresses.Add(loAddress)
+*!*	loAddresses.Add(loAddress)
 
-? loPerson.ToString()
+*!*	? loPerson.ToString()

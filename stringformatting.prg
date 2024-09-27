@@ -4,6 +4,7 @@ CLEAR
 
 do _startup.prg
 
+
 do wwDotNetBridge
 LOCAL loBridge as wwDotNetBridge
 loBridge = GetwwDotnetBridge()
@@ -78,9 +79,7 @@ lcFormat = "n0"
 
 ? "*** Brackets need to be double escaped"
 ? FormatString("This should escape {{braces}} and format the date: {0:MMM dd, yyyy}",DATE())
-
-
-? "*** Also works with ToString for .NET"
+?
 
 *** Load loPerson .NET Object
 ? loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
@@ -89,21 +88,13 @@ lcFormat = "n0"
 loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
 loPerson.Name = "Rick Strahl"
 
-loAddresses = loBridge.GetProperty(loPerson,"Addresses")
+*** COM Array - retrieve item
+loPerson.PrimaryAddress.City = "Uglyton USA"
 
-? loAddresses
-? loBridge.cErrorMsg
-? loAddresses.Count
+*** FormatValue prints .ToString()
+?  "Object (no format): "  + FormatValue(loPerson)
 
-? loBridge.GetTypeName(loAddresses)
-
-? loAddresses
-loAddress = loAddresses.Item(0)
-? loAddress
-
-? loAddress.ToString()
-loAddress.City = "SomeTown Ugly Town USA"
-
+? "*** Object inside of a format string"
 ? FormatString("Person Object:\r\n{0} and the time is: {1:t}", loPerson, DATETIME())
 
 RETURN

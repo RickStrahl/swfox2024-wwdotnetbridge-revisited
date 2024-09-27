@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoxInterop", "FoxInterop.csproj", "{6498BB89-BBAD-4976-B44B-8E96A86C1532}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6498BB89-BBAD-4976-B44B-8E96A86C1532}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6498BB89-BBAD-4976-B44B-8E96A86C1532}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6498BB89-BBAD-4976-B44B-8E96A86C1532}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6498BB89-BBAD-4976-B44B-8E96A86C1532}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {66768A25-9575-445B-BEA3-190A7725C090}
+	EndGlobalSection
+EndGlobal

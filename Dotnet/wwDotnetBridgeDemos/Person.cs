@@ -10,12 +10,26 @@ namespace wwDotnetBridgeDemos
 
         public string Company {get; set; } = "West Wind";
 
-        public string DisplayName =>   (Name ?? string.Empty) +  
+        public string DisplayName =>   Name +  
             (!string.IsNullOrEmpty(Company) ?  $" ({Company})" : string.Empty);
 
         public DateTime Entered {get; set; } = DateTime.Now;
 
         public Address[] Addresses {get; set; } = new Address[1]  { new Address() };
+
+        public Address PrimaryAddress 
+        {
+            get { 
+                var address = Addresses.FirstOrDefault();
+                if (address != null)
+                    return address;
+                address = new Address();
+                var addresses = new List<Address>(Addresses);
+                addresses.Add(address);
+                Addresses = addresses.ToArray();
+                return address;
+            }
+        }
 
         //public List<Address> Addresses {get; set;}  = new List<Address>();
 
@@ -45,7 +59,7 @@ namespace wwDotnetBridgeDemos
         public override string ToString()
         {
             return DisplayName + "\r\n" + 
-                   Addresses.FirstOrDefault()?.ToString();
+                   PrimaryAddress?.ToString();
         }
     }
 
@@ -54,8 +68,8 @@ namespace wwDotnetBridgeDemos
         public string Street {get; set; }  = "123 Nowhere Lane";
         public string City {get; set; }  = "AnyTown";
         public string State {get; set; } = "CA";
-        public string Zip  {get; set; }
-
+        public string Zip  {get; set; } = "11111"
+    
         public override string ToString()
         {
             return Street + "\r\n" + City + "\r\n" + State + " " + Zip;

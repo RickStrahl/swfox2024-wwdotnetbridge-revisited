@@ -1,5 +1,6 @@
 LPARAMETERS lcUrl,  lcOutputFile
 
+
 DO wwutils
 do wwDotNetBridge
 
@@ -45,12 +46,14 @@ loBridge.InvokeTaskmethodAsync(loCallbacks, loPdf,"PrintToPdfAsync", lcUrl, lcOu
 
 ? "*** Converting to PDF - this may take a few seconds..."
 ?
+? "... showing original HTML in browser first"
+?
 
 GoUrl(lcUrl)
 
 RETURN
 
-DEFINE CLASS PdfCallbacks as AsyncCallbackEvents
+DEFINE CLASS PdfCallbacks as Custom
 
 *** Capture output file 
 cOutputFile = ""
@@ -64,6 +67,7 @@ ENDIF
 
 GoUrl(THIS.cOutputFile)
 ? "*** PDF Output Generated!"
+? "... displaying PDF in PDF Viewer (browser)"
 
 ENDFUNC
 
