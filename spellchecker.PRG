@@ -5,7 +5,7 @@ DO wwDotnetBridge
 SET PROCEDURE TO wwUtils additive
 SET PROCEDURE TO SpellChecker ADDITIVE
 
-#IF .T.
+#IF .T.   
 *** RAW API Access
 
 
@@ -13,26 +13,22 @@ do wwDotNetBridge
 LOCAL loBridge as wwDotNetBridge
 loBridge = GetwwDotnetBridge()
 
-? loBridge.LoadAssembly("WeCantSpell.Hunspell.dll")
-? loBridge.cErrorMsg
+loBridge.LoadAssembly("WeCantSpell.Hunspell.dll")
 
 *** Location of Dictionary Files *.dic and *.aff
 dictFolder = FULLPATH("bin\")
-? dictfolder
 	
 *** Creates a Spellchecker instance
 loSpell = loBridge.InvokeStaticMethod("WeCantSpell.Hunspell.WordList",;
                                     "CreateFromFiles",;
                                     dictFolder +"en_US.dic",;
                                     dictFolder + "en_US.aff")
-? loBridge.cErrORMSG
-? loSpell
 
 ? "*** Check 'Colour' (en_US)"
 ? loSpell.Check("Colour")
 ?
 ? "*** Check 'Color' (en_US)"
-? loSpell.check("Color")
+? loSpell.Check("Color")
 ?
 
 ? "*** Suggestions for misspelled 'Colour'" 
@@ -224,7 +220,6 @@ LOCAL llResult
 IF ISNULLOREMPTY(lcWord) OR LEN(lcWord) = 1
    RETURN .T.
 ENDIF
-
 
 llResult = this.oSpell.Check(lcWord)
 

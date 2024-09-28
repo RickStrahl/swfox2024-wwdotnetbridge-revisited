@@ -1,4 +1,5 @@
 LPARAMETERS lcTranslateText, lcLanguage
+PUBLIC pcLanguage
 
 CLEAR
 DO wwutils
@@ -11,7 +12,6 @@ loBridge = GetwwDotnetBridge()
 lcOpenAiKey = GETENV("OPENAI_KEY")
 
 loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OpenAiConnection")
-? loBridge.cErrorMsg
 loConnection.ApiKey = lcOpenAiKey
 loConnection.ModelId = "gpt-4o-mini"
 
@@ -19,7 +19,7 @@ loConnection.ModelId = "gpt-4o-mini"
 *!*	loConnection = loBridge.CreateInstance("Westwind.AI.Configuration.OllamaOpenAiConnection")
 *!*	? loBridge.cErrorMsg
 *!*	loConnection.ModelId = "llama3"
-*!*	* loConnection.ModelId = "phi3.5"
+* loConnection.ModelId = "phi3.5"
 
 
 IF EMPTY(lcTranslateText)
@@ -27,7 +27,9 @@ IF EMPTY(lcTranslateText)
 ENDIF
 IF EMPTY(lcLanguage)
   lcLanguage = "German"
-ENDIF  
+ENDIF
+pcLanguage = lcLanguage  
+  
 
 loCompletions = loBridge.CreateInstance("Westwind.AI.Chat.GenericAiChatClient", loConnection)
 lcSystem = "You are a translator and you translate text from one language to another. " +;
@@ -64,7 +66,7 @@ IF (this.oCompletions.HasError)
     RETURN
 ENDIF
 
-? "To German:"
+? "To " + pcLanguage
 ? "----------"
 ? lcResult
 

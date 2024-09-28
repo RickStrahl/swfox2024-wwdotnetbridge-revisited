@@ -72,7 +72,7 @@ GoUrl(lcUrl)
 *** Download the image
 lcImageFile = "d:\temp\imagegen.png"
 
-*** Download the file
+*** Download the file using .NET
 LOCAL loBridge 
 loBridge = GetwwDotnetBridge()
 loWebClient = loBridge.CreateInstance("System.Net.WebClient")

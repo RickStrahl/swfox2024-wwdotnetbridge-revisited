@@ -91,7 +91,7 @@ lNoHtmlAllowed = .F.
 FUNCTION Init()
 LOCAL loBridge as wwDotNetBridge
 
-loBridge = GetwwDotnetBridge("V4")
+loBridge = GetwwDotnetBridge()
 
 this.oBridge = loBridge
 IF ISNULL(THIS.oBridge)

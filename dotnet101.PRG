@@ -1,8 +1,6 @@
 CLEAR
 DO _STARTUP.prg
 
-SET STEP ON 
-
 do wwDotNetBridge                 && Load library
 LOCAL loBridge as wwDotNetBridge  && for Intellisense
 loBridge = GetwwDotnetBridge()    && instance
@@ -13,8 +11,8 @@ loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
 *** Create an class Instance
 loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
 
-*!*	? loBridge.ToJson(loPerson, .T.)  && Commercial only
-*!*	RETURN
+*? loBridge.ToJson(loPerson, .T.)  && Commercial only
+
 
 *** Access simple Properties
 ? "*** Simple Properties:" 
@@ -30,8 +28,17 @@ loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
 ? loPerson.ToString()  && Formatted\ Person with Address
 ?
 
+	SET STEP ON 
+
 ? "*** Adding  a new address via AddAddress Method"
 loAddress =  loPerson.AddAddress("1 Main","Fairville","CA","12345")
+
+
+*** This ends BADLY! Because: Generic Type inaccessible in Fox
+*** loAddresses = loPerson.Addresses   && List<Address>
+*** ? loAddress  		&& (Object)
+*** ? loAddress.Count   && BOOM! (crashes FoxPro)
+
 
 *** Retrieve a ComArray for the Addresses[] array
 loAddresses = loBridge.GetProperty(loPerson,"Addresses")
@@ -63,17 +70,20 @@ FOR lnX = 0 to loAddresses.Count -1
 ENDFOR
 
 
-*!*	? "*** Explicitly add another item to the array"
-*!*	* loNewAddress = loBridge.CreateInstance("wwDotnetBridgeDemos.Address")
-*!*	loNewAddress = loAddresses.CreateItem()
-*!*	loNewAddress.Street = "122 Newfound Landing"
-*!*	loNewAddress.City = "NewFoundLanding"
-*!*	loAddresses.Add(loNewAddress)
 
 
-*!*	? TRANSFORM(loAddresses.Count) + " Addresses"  && 3 Addresses now
-*!*	FOR lnX = 0 to loAddresses.Count -1 
-*!*	    loAddress = loAddresses.Item(lnX)
-*!*	    ? loAddress.ToString()
-*!*	    ? 
-*!*	ENDFOR
+
+? "*** Explicitly add another item to the array"
+* loNewAddress = loBridge.CreateInstance("wwDotnetBridgeDemos.Address")
+loNewAddress = loAddresses.CreateItem()
+loNewAddress.Street = "122 Newfound Landing"
+loNewAddress.City = "NewFoundLanding"
+loAddresses.Add(loNewAddress)
+
+
+? TRANSFORM(loAddresses.Count) + " Addresses"  && 3 Addresses now
+FOR lnX = 0 to loAddresses.Count -1 
+    loAddress = loAddresses.Item(lnX)
+    ? loAddress.ToString()
+    ? 
+ENDFOR

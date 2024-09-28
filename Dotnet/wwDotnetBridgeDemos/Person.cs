@@ -6,7 +6,7 @@ namespace wwDotnetBridgeDemos
 {
     public class Person
     {        
-        public string Name {get; set; } = "Rick";
+        public string Name {get; set; } = "Rick Strahl";
 
         public string Company {get; set; } = "West Wind";
 
@@ -15,30 +15,32 @@ namespace wwDotnetBridgeDemos
 
         public DateTime Entered {get; set; } = DateTime.Now;
 
-        public Address[] Addresses {get; set; } = new Address[1]  { new Address() };
+        /// <summary>
+        /// A list of addresses - with 1 default address to start
+        /// </summary>
+        public List<Address> Addresses {get; set; } = new List<Address>  { new Address() };
 
         public Address PrimaryAddress 
         {
             get { 
-                var address = Addresses.FirstOrDefault();
+                var address = Addresses?.FirstOrDefault();
                 if (address != null)
                     return address;
-                address = new Address();
-                var addresses = new List<Address>(Addresses);
-                addresses.Add(address);
-                Addresses = addresses.ToArray();
-                return address;
-            }
-        }
+                
+                // Add a default address if none exists
+                address = new Address();               
+                Addresses.Add(address);
 
-        //public List<Address> Addresses {get; set;}  = new List<Address>();
+                return address;
+            } 
+        }
 
 
         public Address AddAddress(string street, string city, string state, string zip)
         {
             if (Addresses == null)
             {
-                Addresses = new Address[] {};
+                Addresses = new List<Address>();
             }
 
             var address = new Address()            
@@ -48,10 +50,7 @@ namespace wwDotnetBridgeDemos
                 State = state,
                 Zip = zip
             };
-
-            var list = new List<Address>(Addresses);
-            list.Add(address);
-            Addresses = list.ToArray();
+            Addresses.Add(address);
 
             return address;
         }
@@ -68,7 +67,7 @@ namespace wwDotnetBridgeDemos
         public string Street {get; set; }  = "123 Nowhere Lane";
         public string City {get; set; }  = "AnyTown";
         public string State {get; set; } = "CA";
-        public string Zip  {get; set; } = "11111"
+        public string Zip  {get; set; } = "11111";
     
         public override string ToString()
         {

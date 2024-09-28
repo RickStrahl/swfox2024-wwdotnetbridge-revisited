@@ -1,5 +1,5 @@
 CLEAR
-*DO _startup.prg
+DO _startup.prg
 
 DO wwDotnetBRidge
 loBridge = GetwwDotnetBridge()
@@ -11,10 +11,12 @@ loPerson = loBridge.CreateInstance("FoxInterop.Person")
 ? loPerson.ToString()
 ?
 
+? loBridge.ToJson(loPerson)
+
 *** ComArray Object returned
 *!*	loAddresses = loBridge.GetProperty(loPerson, "AlternateAddresses")
 
-*!*	* loAddress = loBridge.CreateInstance("FoxInterop.Address")
+* loAddress = loBridge.CreateInstance("FoxInterop.Address")
 *!*	loAddress = loAddresses.CreateItem()
 *!*	loAddress.Street = "3123123 Nowhere Lane"
 *!*	loAddress.City = "Nowhere"

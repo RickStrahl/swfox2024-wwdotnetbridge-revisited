@@ -35,14 +35,15 @@ loCallbacks.cOutputFile = lcOutputFile
 ERASE (lcOutputFile)
 
 loSettings = null
-loSettings = loBridge.CreateInstance("Westwind.WebView.HtmlToPdf.WebViewPrintSettings")
+* loSettings = loBridge.CreateInstance("Westwind.WebView.HtmlToPdf.WebViewPrintSettings")
 *!*	loSettings.ScaleFactor = 0.75
 *!*	loSettings.MarginTop = 1
 *!*	loSettings.ShouldPrintHeaderAndFooter = .T.
 *!*	loSettings.HeaderTitle = "Fox Rocks!"
 
 *** Async PDF Generation Method: Exits immediately
-loBridge.InvokeTaskmethodAsync(loCallbacks, loPdf,"PrintToPdfAsync", lcUrl, lcOutputFile, loSettings)
+loBridge.InvokeTaskmethodAsync(loCallbacks, loPdf,"PrintToPdfAsync", ;
+                               lcUrl, lcOutputFile, loSettings)
 
 ? "*** Converting to PDF - this may take a few seconds..."
 ?
@@ -53,7 +54,7 @@ GoUrl(lcUrl)
 
 RETURN
 
-DEFINE CLASS PdfCallbacks as Custom
+DEFINE CLASS PdfCallbacks as AsyncCallbackEvents
 
 *** Capture output file 
 cOutputFile = ""

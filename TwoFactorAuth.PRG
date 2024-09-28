@@ -18,7 +18,13 @@ lcSecret = GetUniqueId(12)
 loAuth = CREATEOBJECT("TwoFactorAuthentication")
 loSetup  = loAuth.GenerateSetupCode("Westwind.Webstore",;
                                     "rick@test-my-site.com", lcSecret)
-
+                                    
+ ? "*** Two Factor Code"
+ ? "QR Code Base64 value:"
+ ?
+ ? SUBSTR(loSetup.cQrCodeImageData, 1, 100) + "..."                                   
+ ?
+ 
 ShowHtml( loSetup.QrCodeHtml())
 
 *** Test with a 'known' Customer Secret Key (from my site's test account)
@@ -31,9 +37,9 @@ IF EMPTY(lcPin)
 ENDIF
 
 If(loAuth.ValidatePin(lcSecret,lcPin))
-   ? "Pin has been validated"
+   ? "*** Pin has been validated"
 ELSE
-   ? "Invalid Pin code"   
+   ? "*** Invalid Pin code"   
 ENDIF
 
 

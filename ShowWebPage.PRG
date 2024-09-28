@@ -11,7 +11,6 @@
 ***            lcFile       -   Output file for templated HTML (optional)
 ***            lcThemePath  -   Path to the theme folder - should contain `Theme.html` (optional)
 ************************************************************************
-
 FUNCTION ShowWebPage
 LPARAMETERS lcHTML, lcFile, lcThemePath
 LOCAL lcBasePath, lcThemePath, lcT
@@ -23,7 +22,9 @@ lcThemePath = IIF(EMPTY(lcThemePath), lcBasePath + "Assets\Westwind\", lcThemePa
 lcTemplate = "./Assets/Westwind/Theme.html"
 
 *** Expand the 'template'
-lcT =  FILETOSTR(lcTemplate)   
+lcT =  FILETOSTR(lcTemplate)     && Read Template from disk
+
+*** Replace the Template Values
 lcT = STRTRAN(lcT,"${basePath}", lcBasePath)
 lcT = STRTRAN(lcT,"${themePath}", lcThemePath)
 lcHtml = STRTRAN(lcT, "${htmlContent}", lcHtml)

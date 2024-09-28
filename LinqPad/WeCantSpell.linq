@@ -5,7 +5,6 @@
 
 void Main()
 {	
-	
 	string dictFile = @"d:\wwapps\conf\wwdotnetbridgerevisited\bin\en_US";
 	var spell = WordList.CreateFromFiles(dictFile + ".dic", dictFile + ".aff");
 	
@@ -18,5 +17,4 @@ void Main()
 	Console.WriteLine("*** Suggest Colour");
 	var suggestions = spell.Suggest("Colour");
 	suggestions.Dump();
-	
 }

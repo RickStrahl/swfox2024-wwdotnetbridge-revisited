@@ -19,9 +19,7 @@ namespace ChangeMe
             return $"{Name} ({Company})";
         }
 
-        public List<Address> AlternateAddresses { get; set; } = new List<Address>();
-        
-                
+        public List<Address> AlternateAddresses { get; set; } = new List<Address>();   
     }
 
     public class Address

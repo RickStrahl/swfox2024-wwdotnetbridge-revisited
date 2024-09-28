@@ -12,6 +12,8 @@ loBridge = GetwwDotnetBridge()
 ? "*** Date formatting"
 ?
 
+SET STEP ON 
+
 ? "Plain FormatValue on Date: "  + FormatValue(DATETIME())
 * 6/6/2016 7:49:26 PM
 

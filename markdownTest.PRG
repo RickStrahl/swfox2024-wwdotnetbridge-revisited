@@ -6,7 +6,7 @@ DO MarkdownParser
 CLEAR
 
 *** Straight Code
-#IF .T.
+#IF .T. 
 DO wwutils && For Html Preview
 do wwDotNetBridge
 LOCAL loBridge as wwDotNetBridge
@@ -67,6 +67,7 @@ lcHtml = loBridge.InvokeStaticMethod("Markdig.Markdown","ToHtml",;
 * lchtml =  Markdown(lcMarkdown, 2)
 
 ? lcHtml
+*ShowText(lcHtml)
 *ShowHtml(lcHtml)  && from wwUtils show in browser unformatted
 ShowWebPage(lcHtml)
 

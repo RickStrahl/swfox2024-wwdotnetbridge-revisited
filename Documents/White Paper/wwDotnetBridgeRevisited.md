@@ -11,7 +11,7 @@ postStatus: publish
 dontInferFeaturedImage: false
 dontStripH1Header: false
 ---
-# Revisiting wwDotnetBridge and .NET Interop from FoxPro in the Modern Age of .NET
+# Revisiting wwDotnetBridge and .NET Interop from FoxPro
 
 ![Bridge](Bridge.jpg)
 
@@ -3430,4 +3430,4 @@ Let's do a high level sum-up:
     this white paper was created and published with the 
     <a href="https://markdownmonster.west-wind.com" 
        target="top">Markdown Monster Editor</a> 
-</div
+</div>

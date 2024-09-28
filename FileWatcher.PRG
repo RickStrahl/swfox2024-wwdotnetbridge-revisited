@@ -1,4 +1,4 @@
-LPARAMETERS lcFileList, lcFolder, lcWebFolder, lcFolderExclusions
+LPARAMETERS lcFileList, lcFolder, lcFolderExclusions
 LOCAL loBridge as wwDotnetBridge, loEventHandler as FileWatcherEventHandler, ;
       loSubscription, lcNotificationFile
 CLEAR
@@ -11,11 +11,6 @@ ENDIF
 IF EMPTY(lcFolder)
    lcFolder = SYS(5) + CurDir()
 ENDIF
-
-IF EMPTY(lcWebFolder)
-   lcWebFolder = "..\web\"
-ENDIF
-lcWebFolder = ADDBS(lcWebFolder)
 
 *** Allow for auto-compilation
 SET DEVELOPMENT ON
@@ -32,7 +27,6 @@ __WWC_FILEWATCHER.IncludeSubDirectories = .T.
 *** Create the Handler Object that responds to events
 loEventHandler = CREATEOBJECT("FileWatcherEventHandler")
 loEventHandler.cFileList = lcFileList
-
 
 IF !EMPTY(lcFolderExclusions)
    loEventHandler.cFolderExclusions = lcFolderExclusions
@@ -63,7 +57,10 @@ nLastAccess = 0
 
 ************************************************************************
 FUNCTION HasFileChanged(lcFilename as String)
-****************************************
+*********************************************
+* This is a helper to determine which files we need to look at
+************************************************************************
+
 LOCAL lcFileList, lnX, lnFiles, lcExtension, lnExclusions
 LOCAL ARRAY laExtensions[1]
 LOCAL ARRAY laExclusions[1]
@@ -102,6 +99,19 @@ RETURN .F.
 ENDFUNC
 *   HasFileChanged
 
+************************************************************************
+FUNCTION OnChanged(sender,ev)
+*****************************
+LOCAL lcFile 
+
+lcFile = THIS.GetFilename(ev)
+
+IF THIS.HasFileChanged(lcFile)
+	? "File has been changed: " + lcFile
+ENDIF
+
+ENDFUNC
+
 
 ************************************************************************
 FUNCTION OnCreated(sender,ev)
@@ -115,16 +125,6 @@ ENDIF
 	
 ENDFUNC
 
-FUNCTION OnChanged(sender,ev)
-LOCAL lcFile 
-
-lcFile = THIS.GetFilename(ev)
-
-IF THIS.HasFileChanged(lcFile)
-	? "File has been changed: " + lcFile
-ENDIF
-
-ENDFUNC
 
 ************************************************************************
 FUNCTION OnDeleted(sender, ev)

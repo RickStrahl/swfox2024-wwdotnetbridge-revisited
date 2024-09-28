@@ -7,11 +7,7 @@ void Main()
 {
 	var dt = DateTime.Now.AddDays(-10);	
 	dt.Humanize(false, null,null).Dump();
-	
-	
-	
-	
+
 	int val = 1322;
-	val.ToWords(true, WordForm.Normal,null).Dump();
-	
+	val.ToWords(true, WordForm.Normal,null).Dump();	
 }
