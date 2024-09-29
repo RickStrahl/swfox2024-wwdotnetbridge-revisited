@@ -1,5 +1,7 @@
 CLEAR
 DO _STARTUP.prg
+  
+SET STEP ON
 
 do wwDotNetBridge                 && Load library
 LOCAL loBridge as wwDotNetBridge  && for Intellisense
@@ -11,8 +13,9 @@ loBridge.LoadAssembly("wwDotnetBridgeDemos.dll")
 *** Create an class Instance
 loPerson = loBridge.CreateInstance("wwDotnetBridgeDemos.Person")
 
-*? loBridge.ToJson(loPerson, .T.)  && Commercial only
+? loBridge.ToJson(loPerson, .T.)  && Commercial only
 
+CLEAR
 
 *** Access simple Properties
 ? "*** Simple Properties:" 

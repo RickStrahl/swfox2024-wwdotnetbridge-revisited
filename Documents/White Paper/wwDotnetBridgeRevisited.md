@@ -860,7 +860,7 @@ public string DisplayName => (Name ?? string.Empty) +
 public override string ToString()
 {
     return DisplayName + "\r\n" +                  
-           Addresses.FirstOrDefault()?.ToString(); 
+           Addresses.FirstOrDefault();  && .ToString() is implied! 
 }
 
 // Address
@@ -947,11 +947,6 @@ ENDFUNC
 ************************************************************************
 *  EscapeCSharpString
 ****************************************
-***  Function:
-***    Assume:
-***      Pass:
-***    Return:
-************************************************************************
 FUNCTION EscapeCSharpString(lcValue)
 
 lcValue = STRTRAN(lcValue, "\r", CHR(13))
@@ -962,7 +957,7 @@ lcValue = STRTRAN(lcValue, "\0", CHR(0))
 RETURN lcValue
 ```
 
-The first thing you notice here's is that we are calling a **static method** on the `System.String` class. Static methods are non-instance method, meaning you don't first create an instance. Instead the methods are static and bound to a specific type. In FoxPro this is similar to a UDF() function or plain function that is globally available. Static methods and properties are referenced by the type name - ie. `System.String` instead of the instance, followed by the method or member name. 
+The first thing you notice here's is that we are calling a **static method** on the `System.String` class. Static methods are non-instance method, meaning you don't first create an instance. Instead the methods are static and bound to a specific type ie. `System.String`. In FoxPro this is similar to a **UDF()** function or plain function that is globally available. Static methods and properties are referenced by the type name - ie. `System.String` instead of the instance, followed by the method or member name. 
 
 Here we call the static Format method with the format string and a single value as a parameter:
 
@@ -1265,7 +1260,7 @@ ENDFUNC
 ```
 
 #### Using Templates to make the Markdown Look Nicer
-Markdown is useful **especially in Web applications** where HTML can be directly displaying inside of a Web Page. But if you just generate the HTML and display it **as is** the output is somewhat underwhelming as you're getting the browser's default styling.
+Markdown is useful **especially in Web applications** where HTML can be directly displayed inside of a Web Page. But if you just generate the HTML and display it **as is** the output is somewhat underwhelming as you're getting the browser's default styling.
 
 If you're using Markdown in desktop applications what you'd want to do, likely is to create an HTML page template into which to render the generated HTML, with CSS styling applied so you can produce output that looks a little more user friendly:
 
@@ -1273,8 +1268,8 @@ If you're using Markdown in desktop applications what you'd want to do, likely i
 
 This actually uses styling I picked up from Markdown Monster via templating. This works by creating an HTML template and embedding the rendered markdown - along with some base paths - into it:
 
-> ##### Beware of TextMerge()
-Initially I used the `TextMerge()` function to merge text, but it turns out that it has difficulty with linefeeds only which are common with Markdown content created in external editors. For certain things like code snippets the stripped line breaks are causing problems. So rather than using `TextMerge()` in the code below I'm explicitly placeholder values in the text.
+> ##### Beware of FoxPro's TextMerge() Function
+Initially I used the `TextMerge()` function to merge text, but it turns out that it has difficulty with linefeeds (`/n`) rather than CRLF, which are common with Markdown content created in external editors. For certain things like code snippets the stripped line breaks are causing problems. So rather than using `TextMerge()` in the code below I'm explicitly placeholder values in the text.
 
 
 ```html
@@ -1402,7 +1397,6 @@ RETURN ShellExec_1( _Screen.HWnd,;
                     tcParms,tcDirectory,tnShowWindow)
 ENDFUNC
 *   ShellExecute
-
 ```
 
 To use this now becomes pretty simple:
@@ -1700,7 +1694,7 @@ So then I can use my matching user account that matches the secret key, and now 
 I can paste the value and the Authenticator checks for validity.
 
 #### Two-Factoring: Logic is up to you
-The code I've shown provides the logistics, but how you implement is up to you. You can use Two-Factor auth in Web apps where it's quite common, but as you've seen here it's also possible to do this in Desktop applications as long as you can display a QR code - or you can optionally just use the Manual Setup code.
+The code I've shown provides the logistics, but how you implement it is up to you. You can use Two-Factor auth in Web apps where it's quite common, but as you've seen here it's also possible to do this in Desktop applications as long as you can display a QR code - or you can optionally just use the Manual Setup code.
 
 ### Add Spellchecking to your applications
 
