@@ -34,7 +34,52 @@ More importantly though, .NET has garnered a huge eco system of open source and 
 
 All of this is good news for FoxPro developers, as you can take advantage of most of that .NET functionality to **extend your own FoxPro applications** with rich functionality beyond FoxPro's native features using either basic COM interop (very limited) or more usefully with the open source [wwDotnetBridge library](https://github.com/RickStrahl/wwDotnetBridge).
 
-> In this very long White Paper, I'll introduce wwDotnetBridge and some of the things that you probably need to know about working with .NET before diving into 10 separate examples along with some background on each, that each demonstrate different features of wwDotnetBridge. Most of the size is in these examples as they provide some background and in some cases quite a bit of code and you can skip those that don't interest you.
+> In this very long White Paper, I'll introduce wwDotnetBridge and some of the things that you need to know about working with .NET, before diving into 10 separate examples that demonstrate varying features of wwDotnetBridge. Don't let the size scare you off - most of the size comes from the lengthy code snippets in the examples and you can skip to different examples as needed.
+
+
+<!-- Start Document Outline -->
+## Document Outline
+
+* [.NET History: .NET Framework to .NET Core](#net-history-net-framework-to-net-core)
+* [.NET and FoxPro](#net-and-foxpro)
+* [Why .NET for FoxPro?](#why-net-for-foxpro)
+* [What is wwDotnetBridge?](#what-is-wwdotnetbridge)
+* [A quick Primer](#a-quick-primer)
+	* [Setting up wwDotnetBridge](#setting-up-wwdotnetbridge)
+	* [Loading wwDotnetBridge and Loading your first .NET Library](#loading-wwdotnetbridge-and-loading-your-first-net-library)
+	* [Loading Assemblies and Creating an Instance](#loading-assemblies-and-creating-an-instance)
+	* [Direct Invocation of Members](#direct-invocation-of-members)
+	* [Proxy Invocation for Problem Types and Helpers](#proxy-invocation-for-problem-types-and-helpers)
+* [How does wwDotnetBridge Work](#how-does-wwdotnetbridge-work)
+	* [A .NET Loader](#a-net-loader)
+	* [wwDotnetBridge Loader](#wwdotnetbridge-loader)
+	* [Direct Member Access is via COM](#direct-member-access-is-via-com)
+	* [Indirect Member Access via InvokeMethod(), GetProperty() and SetProperty()](#indirect-member-access-via-invokemethod-getproperty-and-setproperty)
+	* [wwDotnetBridge Proxy Type Wrappers: ComArray and ComValue](#wwdotnetbridge-proxy-type-wrappers-comarray-and-comvalue)
+* [Figuring out what's available in .NET](#figuring-out-whats-available-in-net)
+	* [Figuring out what Assemblies (DLLs) to Provide](#figuring-out-what-assemblies-dlls-to-provide)
+	* [Finding DLLs: Unpacking NuGet Packages and their Dependencies using a .NET Project](#finding-dlls-unpacking-nuget-packages-and-their-dependencies-using-a-net-project)
+	    * [Use a Disassembler Tool to discover .NET Types and Members](#use-a-disassembler-tool-to-discover-net-types-and-members)
+	    * [Use LinqPad to Test Out Code](#use-linqpad-to-test-out-code)
+* [10 Usage Examples](#usage-examples)
+	1. [wwDotnetBridge 101 – Load, Create, Invoke, Get/Set](#wwdotnetbridge-101--load-create-invoke-getset)
+	2. [Create a powerful String Formatter](#create-a-powerful-string-formatter)
+	3. [Add Markdown Parsing to your Applications](#add-markdown-parsing-to-your-applications)
+	4. [Use a Two-Factor Authenticator Library](#use-a-two-factor-authenticator-library)
+	5. [Add Spellchecking to your applications](#add-spellchecking-to-your-applications)
+	6. [Humanize numbers, dates, measurements](#humanize-numbers-dates-measurements)
+	7. [A File System Watcher and Live Reload (Event Handling)](#a-file-system-watcher-and-live-reload-event-handling)
+	8. [Async: Print Html to Pdf](#async-print-html-to-pdf)
+	9. [Async: OpenAI Calls](#async-openai-calls)
+	    * Language Translation
+	    * Document Summary
+	    * Image Generation
+	10. [Create a .NET Component and call it from FoxPro](#create-a-net-component-and-call-it-from-foxpro)
+* [Best Practices](#best-practices)
+	* [.NET Dependency Version Management](#net-dependency-version-management)
+	* [Keep it simple: Use .NET When wwDotnetBridge is a lot of Effort](#keep-it-simple-use-net-when-wwdotnetbridge-is-a-lot-of-effort)
+
+<!-- End Document Outline -->
 
 ## .NET History: .NET Framework to .NET Core
 .NET has been around since the early 2000's and in those nearly 25 years it has undergone a number of transformations. From its early days as a limited distributed runtime, to integration into Windows as a core Windows component, to the splitting off of .NET Core as a cross platform capable version of .NET, to full cross-platform support for .NET Core, to recent releases that provide nearly full compatibility with .NET Framework for .NET Core including of Windows specific platforms (ie. WinForms, WPF, WinUI).
