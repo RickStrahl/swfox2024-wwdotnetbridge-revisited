@@ -34,9 +34,6 @@ More importantly though, .NET has garnered a huge eco system of open source and 
 
 All of this is good news for FoxPro developers, as you can take advantage of most of that .NET functionality to **extend your own FoxPro applications** with rich functionality beyond FoxPro's native features using either basic COM interop (very limited) or more usefully with the open source [wwDotnetBridge library](https://github.com/RickStrahl/wwDotnetBridge).
 
-> In this very long White Paper, I'll introduce wwDotnetBridge and some of the things that you need to know about working with .NET, before diving into 10 separate examples that demonstrate varying features of wwDotnetBridge. Don't let the size scare you off - most of the size comes from the lengthy code snippets in the examples and you can skip to different examples as needed.
-
-
 <!-- Start Document Outline -->
 ## What we cover
 
