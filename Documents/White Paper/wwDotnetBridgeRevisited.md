@@ -38,7 +38,7 @@ All of this is good news for FoxPro developers, as you can take advantage of mos
 
 
 <!-- Start Document Outline -->
-## Document Outline
+## What we cover
 
 * [.NET History: .NET Framework to .NET Core](#net-history-net-framework-to-net-core)
 * [.NET and FoxPro](#net-and-foxpro)
