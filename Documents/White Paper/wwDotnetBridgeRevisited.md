@@ -25,6 +25,7 @@ dontStripH1Header: false
 [wwDotnetBridge Repo](https://github.com/RickStrahl/wwDotnetBridge) on GitHub  
 [wwDotnetBridge Docs](https://webconnection.west-wind.com/docs/_24n1cfw3a.htm)  
 [West Wind Message Board Support](https://support.west-wind.com)
+
 </div>
 
 .NET has proliferated as the dominant Windows development environment, both for Windows application development using a variety of different Windows-specific platforms and as the high-level API surface chosen by Microsoft to expose Windows system functionality besides low-level, native C++.
@@ -93,7 +94,7 @@ Unfortunately there are many .NET features that COM and FoxPro don't natively su
 Because there are many incompatible types in .NET that don't have equivalents in COM or FoxPro, wwDotnetBridge performs many automatic type conversions. These make it easier to call methods or retrieve values from .NET by automatically converting compatible types. For example: decimals to double, long, byte to int, Guid to string etc. There are also wrapper classes like `ComArray` that wraps  .NET Arrays and Collections and provides a FoxPro friendly interface for navigating and updating collections, and `ComValue` which wraps incompatible .NET values and provides convenient methods to set and retrieve the value in a FoxPro friendly way and pass it to .NET methods or property assignments.
 
 * **Support for Async Code Execution**  
-A lot of modern .NET Code uses async functionality via `Task` based interfaces, and wwDotnetBridge includes a `InvokeTaskMethodAsyc()` helper that lets you call these async methods and receive results via Callbacks asynchronously. You can also run **any** .NET synchronous method and call it asynchronously using `InvokeMethodAsync()` using the same Callback mechanism.
+A lot of modern .NET Code uses async functionality via `Task` based interfaces, and wwDotnetBridge includes a `InvokeTaskMethodAsyc()` helper that lets you call these async methods and receive results via Callbacks asynchronously. You can also run **any** .NET synchronous method and call it asynchronously using `InvokeMethodAsync()` using the same Callback mechanism. Finally there's also support for handling .NET events with similar callback mechanics.
 
 There's much more, but these are the most common features used in wwDotnetBridge.
 
@@ -122,7 +123,7 @@ The three files you need for wwDotnetBridge are:
 Copy these into your root project folder. `CrlLoader.dll` or `wwIPstuff.dll`  **have to live in the root folder** the other two can live along your FoxPro path.
 
 > #### @icon-info-circle Loading DLLs from Network Locations: Configuration required
-> .NET components require explicit configuration in order to support remote loading from network locations. This is done by creating a configuration file for your application `yourapp.exe.config` or the VFP IDE `vfp9.exe.config`, in their respective startup folders. We recommend at minimum you use the following `.config` file settings:
+> .NET components require explicit configuration in order to support **remote loading from network locations**. This is done by creating a configuration file for your application `yourapp.exe.config` or the VFP IDE `vfp9.exe.config`, in their respective startup folders. We recommend at minimum you use the following `.config` file settings:
 > ```xml
 > <?xml version="1.0"?>
 > <configuration>
@@ -1503,7 +1504,7 @@ In a live application here's what this looks like.
 
 As a user you can capture the QR code in an authenticator app like Authy here:
 
-![Two Factor Authy](Two-Factor-Authy.png)
+![Two Factor Authy](Two-Factor-Authy.jpg)
 
 or, more conveniently as part of a password manager like 1Password as I do:
 
@@ -2920,7 +2921,7 @@ Ok the last AI example is a little different in that it creates image output fro
 
 Here's an example:
 
-![OpenAI ImageGeneration](OpenAI-ImageGeneration.png)
+![OpenAI ImageGeneration](OpenAI-ImageGeneration.jpg)
 
 The results can be pretty cool like the one above, but it might take more than a few tries to arrive at good useful examples. It's also extremely important that you describe your image in great detail, including some directions on what style and coloring the image should use for example.
 
@@ -3048,7 +3049,7 @@ Similar specialized dialogs exist for translations, and text summaries that can 
 
 Image generation is integrated with an interactive editor and image manager that can be used to capture and embed images:
 
-![OpenAI MarkdownMonster ImageGeneration](OpenAI-MarkdownMonster-ImageGeneration.png)
+![OpenAI MarkdownMonster ImageGeneration](OpenAI-MarkdownMonster-ImageGeneration.jpg)
 
 All of these features are implemented using the same library I've shown in the samples above, so these examples are real world integrations that are in production in a commercial application.
 
